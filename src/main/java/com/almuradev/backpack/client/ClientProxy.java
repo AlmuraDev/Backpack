@@ -7,12 +7,11 @@ package com.almuradev.backpack.client;
 
 import com.almuradev.backpack.Backpack;
 import com.almuradev.backpack.CommonProxy;
-import com.almuradev.backpack.server.network.play.S00BackpackOpenRequest;
+import com.almuradev.backpack.client.play.C00BackpackOpenRequest;
 import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import cpw.mods.fml.common.gameevent.InputEvent.KeyInputEvent;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.settings.KeyBinding;
 import org.lwjgl.input.Keyboard;
 
@@ -29,7 +28,7 @@ public class ClientProxy extends CommonProxy {
     @SubscribeEvent
     public void onKeyInput(KeyInputEvent event) {
         if (BINDING_OPEN_BACKPACK.isPressed()) {
-            Backpack.NETWORK_FORGE.sendToServer(new S00BackpackOpenRequest());
+            Backpack.NETWORK_FORGE.sendToServer(new C00BackpackOpenRequest());
         }
     }
 }

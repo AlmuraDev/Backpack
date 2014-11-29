@@ -1,4 +1,4 @@
-package com.almuradev.backpack.server.network.play;
+package com.almuradev.backpack.client.play;
 
 import com.almuradev.backpack.storage.SimpleInventory;
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
@@ -6,7 +6,7 @@ import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
 import cpw.mods.fml.common.network.simpleimpl.MessageContext;
 import io.netty.buffer.ByteBuf;
 
-public class S00BackpackOpenRequest implements IMessage, IMessageHandler<S00BackpackOpenRequest, IMessage> {
+public class C00BackpackOpenRequest implements IMessage, IMessageHandler<C00BackpackOpenRequest, IMessage> {
 
     @Override
     public void fromBytes(ByteBuf byteBuf) {
@@ -19,7 +19,7 @@ public class S00BackpackOpenRequest implements IMessage, IMessageHandler<S00Back
     }
 
     @Override
-    public IMessage onMessage(S00BackpackOpenRequest s00BackpackOpenRequest, MessageContext ctx) {
+    public IMessage onMessage(C00BackpackOpenRequest message, MessageContext ctx) {
         if (ctx.side.isServer()) {
             ctx.getServerHandler().playerEntity.displayGUIChest(new SimpleInventory("Backpack", 9));
         }
