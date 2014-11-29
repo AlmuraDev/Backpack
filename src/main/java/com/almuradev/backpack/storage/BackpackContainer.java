@@ -5,7 +5,6 @@
  */
 package com.almuradev.backpack.storage;
 
-import com.almuradev.backpack.Backpack;
 import cpw.mods.fml.common.FMLCommonHandler;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.ContainerChest;
@@ -20,10 +19,8 @@ public class BackpackContainer extends ContainerChest {
     public void onContainerClosed(EntityPlayer player) {
         super.onContainerClosed(player);
 
-        Backpack.LOGGER.info("Container closed on Side [" + FMLCommonHandler.instance().getEffectiveSide() + "]");
-
         if (FMLCommonHandler.instance().getEffectiveSide().isServer()) {
-            ((SimpleInventory) getLowerChestInventory()).toNBT(player.getEntityData());
+            ((SimpleInventory) getLowerChestInventory()).toNBT(player.worldObj.getWorldInfo().getWorldName(), player.worldObj.provider.getDimensionName(), player.getEntityData());
         }
     }
 }

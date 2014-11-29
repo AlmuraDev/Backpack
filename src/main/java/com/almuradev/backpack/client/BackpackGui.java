@@ -3,11 +3,6 @@
  *
  * Copyright (c) 2014 AlmuraDev <http://github.com/AlmuraDev/>
  */
-//
-// Source code recreated from a .class file by IntelliJ IDEA
-// (powered by Fernflower decompiler)
-//
-
 package com.almuradev.backpack.client;
 
 import com.almuradev.backpack.storage.BackpackContainer;

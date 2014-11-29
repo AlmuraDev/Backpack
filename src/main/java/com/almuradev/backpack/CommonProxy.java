@@ -30,7 +30,7 @@ public class CommonProxy implements IGuiHandler {
     @Override
     public Object getServerGuiElement(int id, EntityPlayer player, World world, int x, int y, int z) {
         final SimpleInventory inventory = new SimpleInventory("Backpack", 9);
-        inventory.fromNBT(player.getEntityData());
+        inventory.fromNBT(player.worldObj.getWorldInfo().getWorldName(), player.worldObj.provider.getDimensionName(), player.getEntityData());
         return new BackpackContainer(player.inventory, inventory);
     }
 
