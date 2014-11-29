@@ -7,7 +7,8 @@ package com.almuradev.backpack.client;
 
 import com.almuradev.backpack.Backpack;
 import com.almuradev.backpack.CommonProxy;
-import com.almuradev.backpack.client.play.C00BackpackOpenRequest;
+import com.almuradev.backpack.client.network.play.C00BackpackOpenRequest;
+import cpw.mods.fml.client.registry.ClientRegistry;
 import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
@@ -17,12 +18,15 @@ import org.lwjgl.input.Keyboard;
 
 public class ClientProxy extends CommonProxy {
     public static final String CLASSPATH = "com.almuradev.backpack.client.ClientProxy";
-    public static final KeyBinding BINDING_OPEN_BACKPACK = new KeyBinding("Open Backpack", Keyboard.KEY_B, "Opens a backpack!");
+    public static final KeyBinding BINDING_OPEN_BACKPACK = new KeyBinding("key.backpack", Keyboard.KEY_B, "key.categories.inventory");
+    public static String title;
+    public static int size;
 
     @Override
     public void onPreInitialization(FMLPreInitializationEvent event) {
         super.onPreInitialization(event);
         FMLCommonHandler.instance().bus().register(this);
+        ClientRegistry.registerKeyBinding(BINDING_OPEN_BACKPACK);
     }
 
     @SubscribeEvent
