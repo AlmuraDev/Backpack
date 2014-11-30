@@ -1,3 +1,8 @@
+/**
+ * This file is part of Backpack, All Rights Reserved.
+ *
+ * Copyright (c) 2014 AlmuraDev <http://github.com/AlmuraDev/>
+ */
 package com.almuradev.backpack.server;
 
 public class BackpackDescriptor {

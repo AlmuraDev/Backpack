@@ -5,7 +5,7 @@
  */
 package com.almuradev.backpack.client;
 
-import com.almuradev.backpack.storage.BackpackContainer;
+import com.almuradev.backpack.BackpackContainer;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 import net.minecraft.client.gui.inventory.GuiContainer;

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2014 AlmuraDev <http://github.com/AlmuraDev/>
  */
-package com.almuradev.backpack.storage;
+package com.almuradev.backpack;
 
 import com.almuradev.backpack.server.BackpackDescriptor;
 import com.almuradev.backpack.server.ServerProxy;
@@ -13,7 +13,6 @@ import net.minecraft.init.Items;
 import net.minecraft.inventory.ContainerChest;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
 
 public class BackpackContainer extends ContainerChest {
 
@@ -28,20 +27,16 @@ public class BackpackContainer extends ContainerChest {
         if (FMLCommonHandler.instance().getEffectiveSide().isServer()) {
             final BackpackDescriptor descriptor = ServerProxy.DESCRIPTOR_MAP.remove(player.getCommandSenderName());
             if (descriptor != null) {
-                final SimpleInventory inv = (SimpleInventory) getLowerChestInventory();
                 switch (descriptor.type) {
                     case 0:
-                        inv.toNBT(player.worldObj.getWorldInfo().getWorldName(), player.worldObj.provider.getDimensionName(), player.getEntityData());
+                        InventoryUtil.saveToNBT(getLowerChestInventory(), player.worldObj.getWorldInfo().getWorldName(),
+                                                player.worldObj.provider.dimensionId, player.getEntityData());
                         break;
                     case 1:
                         final ItemStack stack = player.getHeldItem();
                         //TODO Switch to Backpack Item
                         if (stack != null && stack.getItem() == Items.bone) {
-                            final NBTTagCompound
-                                    compound =
-                                    inv.toNBT(player.worldObj.getWorldInfo().getWorldName(), player.worldObj.provider.getDimensionName(),
-                                              stack.getTagCompound());
-                            stack.setTagCompound(compound);
+                            stack.setTagCompound(InventoryUtil.saveToNBT(getLowerChestInventory(), stack.getTagCompound()));
                         }
                         break;
                 }
