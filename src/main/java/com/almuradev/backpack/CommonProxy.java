@@ -12,20 +12,29 @@ import com.almuradev.backpack.client.network.play.C01BackpackOpenResponse;
 import com.almuradev.backpack.server.BackpackDescriptor;
 import com.almuradev.backpack.server.ServerProxy;
 import com.almuradev.backpack.server.network.play.S00BackpackOpenRequest;
+import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
+import cpw.mods.fml.common.eventhandler.SubscribeEvent;
+import cpw.mods.fml.common.gameevent.PlayerEvent;
 import cpw.mods.fml.common.network.IGuiHandler;
 import cpw.mods.fml.common.network.NetworkRegistry;
 import cpw.mods.fml.common.registry.GameRegistry;
 import cpw.mods.fml.relauncher.Side;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.InventoryBasic;
+import net.minecraft.inventory.InventoryCrafting;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.crafting.IRecipe;
+import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.world.World;
 
 public class CommonProxy implements IGuiHandler {
     public static final BackpackItem ITEM_BACKPACK = new BackpackItem();
+    public static IRecipe RECIPE_CREATE_BACKPACK;
+    public static IRecipe RECIPE_UPGRADE_BACKPACK;
 
     public void onPreInitialization(FMLPreInitializationEvent event) {
         Backpack.NETWORK_FORGE.registerMessage(C00BackpackOpenRequest.class, C00BackpackOpenRequest.class, 0, Side.SERVER);
@@ -33,6 +42,22 @@ public class CommonProxy implements IGuiHandler {
         Backpack.NETWORK_FORGE.registerMessage(S00BackpackOpenRequest.class, S00BackpackOpenRequest.class, 2, Side.CLIENT);
         NetworkRegistry.INSTANCE.registerGuiHandler(Backpack.INSTANCE, new CommonProxy());
         GameRegistry.registerItem(ITEM_BACKPACK, ITEM_BACKPACK.getUnlocalizedName());
+        RECIPE_CREATE_BACKPACK = GameRegistry.addShapedRecipe(new ItemStack(ITEM_BACKPACK),
+                "LDL",
+                "LEL",
+                "LSL",
+                'L', Items.leather,
+                'D', Items.diamond,
+                'E', Blocks.ender_chest,
+                'S', Items.string);
+        RECIPE_UPGRADE_BACKPACK = GameRegistry.addShapedRecipe(new ItemStack(ITEM_BACKPACK),
+                "DDD",
+                " B ",
+                "EEE",
+                'D', Items.diamond,
+                'B', ITEM_BACKPACK,
+                'E', Items.emerald);
+        FMLCommonHandler.instance().bus().register(this);
     }
 
     public BackpackDescriptor getDescriptor(EntityPlayer player) {
@@ -67,5 +92,22 @@ public class CommonProxy implements IGuiHandler {
     @Override
     public Object getClientGuiElement(int id, EntityPlayer player, World world, int x, int y, int z) {
         return new BackpackGui(player.inventory, new InventoryBasic(ClientProxy.descriptor.title, true, ClientProxy.descriptor.size));
+    }
+
+    @SubscribeEvent
+    public void onItemCrafted(PlayerEvent.ItemCraftedEvent event) {
+        if (!event.player.worldObj.isRemote) {
+            if (RECIPE_CREATE_BACKPACK.matches((InventoryCrafting) event.craftMatrix, event.player.worldObj)) {
+                event.crafting.setTagCompound(InventoryUtil.initNBTFor("Backpack", 9, event.crafting.getTagCompound()));
+            } else if (RECIPE_UPGRADE_BACKPACK.matches((InventoryCrafting) event.craftMatrix, event.player.worldObj)) {
+                final ItemStack previousBackpack = event.craftMatrix.getStackInSlot(4);
+                final int size = InventoryUtil.getSizeFromNBT(previousBackpack.getTagCompound());
+
+                if (size < 54) {
+                    event.crafting.setTagCompound((NBTTagCompound) previousBackpack.getTagCompound().copy());
+                    InventoryUtil.setSizeFor(size + 9, event.crafting.getTagCompound());
+                }
+            }
+        }
     }
 }

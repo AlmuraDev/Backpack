@@ -200,4 +200,17 @@ public class InventoryUtil {
         compound.setTag(TAG_COMPOUND, inventoryCompound);
         return compound;
     }
+
+    public static int getSizeFromNBT(NBTTagCompound compound) {
+        if (compound == null) {
+            return 0;
+        }
+        return compound.getCompoundTag(TAG_COMPOUND).getInteger(TAG_SIZE);
+    }
+
+    public static void setSizeFor(int size, NBTTagCompound compound) {
+        if (size >= 9 && size <= 54) {
+            compound.getCompoundTag(TAG_COMPOUND).setInteger(TAG_SIZE, size);
+        }
+    }
 }
