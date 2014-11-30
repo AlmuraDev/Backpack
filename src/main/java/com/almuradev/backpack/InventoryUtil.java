@@ -201,16 +201,37 @@ public class InventoryUtil {
         return compound;
     }
 
-    public static int getSizeFromNBT(NBTTagCompound compound) {
-        if (compound == null) {
-            return 0;
+    public static int getSizeFromNBT(NBTTagCompound compound, int fallback) {
+        if (compound != null) {
+            int size = compound.getCompoundTag(TAG_COMPOUND).getInteger(TAG_SIZE);
+            if (size >= 9 && size <= 54 && size % 9 == 0) {
+                return size;
+            }
         }
-        return compound.getCompoundTag(TAG_COMPOUND).getInteger(TAG_SIZE);
+        return fallback;
     }
 
-    public static void setSizeFor(int size, NBTTagCompound compound) {
-        if (size >= 9 && size <= 54) {
+    public static NBTTagCompound setSizeFor(int size, NBTTagCompound compound) {
+        if (size >= 9 && size <= 54 && size % 9 == 0) {
             compound.getCompoundTag(TAG_COMPOUND).setInteger(TAG_SIZE, size);
         }
+        return compound;
+    }
+
+    public static String getTitleFromNBT(NBTTagCompound compound, String fallback) {
+        if (compound != null) {
+            final String title = compound.getCompoundTag(TAG_COMPOUND).getString(TAG_TITLE);
+            if (!title.isEmpty()) {
+                return title;
+            }
+        }
+        return fallback;
+    }
+
+    public static NBTTagCompound setTitleFor(String title, NBTTagCompound compound) {
+        if (!title.isEmpty()) {
+            compound.getCompoundTag(TAG_COMPOUND).setString(TAG_TITLE, title);
+        }
+        return compound;
     }
 }

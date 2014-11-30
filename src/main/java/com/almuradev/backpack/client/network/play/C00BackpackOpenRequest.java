@@ -6,6 +6,7 @@
 package com.almuradev.backpack.client.network.play;
 
 import com.almuradev.backpack.CommonProxy;
+import com.almuradev.backpack.InventoryUtil;
 import com.almuradev.backpack.server.BackpackDescriptor;
 import com.almuradev.backpack.server.ServerProxy;
 import com.almuradev.backpack.server.network.play.S00BackpackOpenRequest;
@@ -60,7 +61,7 @@ public class C00BackpackOpenRequest implements IMessage, IMessageHandler<C00Back
                 final EntityPlayer player = ctx.getServerHandler().playerEntity;
                 final ItemStack stack = player.getHeldItem();
                 if (stack != null && stack.getItem() == CommonProxy.ITEM_BACKPACK) {
-                    return new BackpackDescriptor(message.type, "Backpack", 9);
+                    return new BackpackDescriptor(message.type, InventoryUtil.getTitleFromNBT(stack.getTagCompound(), "Backpack"), InventoryUtil.getSizeFromNBT(stack.getTagCompound(), 9));
                 }
         }
         return null;

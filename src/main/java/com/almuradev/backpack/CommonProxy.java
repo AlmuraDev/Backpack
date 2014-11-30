@@ -101,10 +101,10 @@ public class CommonProxy implements IGuiHandler {
                 event.crafting.setTagCompound(InventoryUtil.initNBTFor("Backpack", 9, event.crafting.getTagCompound()));
             } else if (RECIPE_UPGRADE_BACKPACK.matches((InventoryCrafting) event.craftMatrix, event.player.worldObj)) {
                 final ItemStack previousBackpack = event.craftMatrix.getStackInSlot(4);
-                final int size = InventoryUtil.getSizeFromNBT(previousBackpack.getTagCompound());
+                final int size = InventoryUtil.getSizeFromNBT(previousBackpack.getTagCompound(), 9);
 
+                event.crafting.setTagCompound((NBTTagCompound) previousBackpack.getTagCompound().copy());
                 if (size < 54) {
-                    event.crafting.setTagCompound((NBTTagCompound) previousBackpack.getTagCompound().copy());
                     InventoryUtil.setSizeFor(size + 9, event.crafting.getTagCompound());
                 }
             }
