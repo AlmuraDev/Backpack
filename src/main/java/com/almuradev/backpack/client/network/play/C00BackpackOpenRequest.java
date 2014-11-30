@@ -61,7 +61,8 @@ public class C00BackpackOpenRequest implements IMessage, IMessageHandler<C00Back
                 final EntityPlayer player = ctx.getServerHandler().playerEntity;
                 final ItemStack stack = player.getHeldItem();
                 if (stack != null && stack.getItem() == CommonProxy.ITEM_BACKPACK) {
-                    return new BackpackDescriptor(message.type, InventoryUtil.getTitleFromNBT(stack.getTagCompound(), "Backpack"), InventoryUtil.getSizeFromNBT(stack.getTagCompound(), 9));
+                    return new BackpackDescriptor(message.type, InventoryUtil.getTitleFromNBT(stack.getTagCompound(), "Backpack"),
+                                                  InventoryUtil.getSizeFromNBT(stack.getTagCompound(), 9));
                 }
         }
         return null;

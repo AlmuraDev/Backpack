@@ -1,12 +1,15 @@
 package com.almuradev.backpack;
 
 import com.almuradev.backpack.client.network.play.C00BackpackOpenRequest;
+import net.minecraft.client.Minecraft;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.world.World;
+
+import java.util.List;
 
 public class BackpackItem extends Item {
 
@@ -33,5 +36,12 @@ public class BackpackItem extends Item {
             }
         }
         return stack;
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public void addInformation(ItemStack stack, EntityPlayer player, List list, boolean par4)
+    {
+        list.add("§6§oSize:§r " + InventoryUtil.getSizeFromNBT(stack.getTagCompound(), 9));
     }
 }

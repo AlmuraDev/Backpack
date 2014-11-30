@@ -9,13 +9,12 @@ import com.almuradev.backpack.server.BackpackDescriptor;
 import com.almuradev.backpack.server.ServerProxy;
 import cpw.mods.fml.common.FMLCommonHandler;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.init.Items;
 import net.minecraft.inventory.ContainerChest;
 import net.minecraft.inventory.IInventory;
-import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 
 public class BackpackContainer extends ContainerChest {
+
     private final IInventory upperInventory;
 
     public BackpackContainer(IInventory upperInventory, IInventory lowerInventory) {

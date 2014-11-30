@@ -32,6 +32,7 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.world.World;
 
 public class CommonProxy implements IGuiHandler {
+
     public static final BackpackItem ITEM_BACKPACK = new BackpackItem();
     public static IRecipe RECIPE_CREATE_BACKPACK;
     public static IRecipe RECIPE_UPGRADE_BACKPACK;
@@ -42,21 +43,22 @@ public class CommonProxy implements IGuiHandler {
         Backpack.NETWORK_FORGE.registerMessage(S00BackpackOpenRequest.class, S00BackpackOpenRequest.class, 2, Side.CLIENT);
         NetworkRegistry.INSTANCE.registerGuiHandler(Backpack.INSTANCE, new CommonProxy());
         GameRegistry.registerItem(ITEM_BACKPACK, ITEM_BACKPACK.getUnlocalizedName());
+
         RECIPE_CREATE_BACKPACK = GameRegistry.addShapedRecipe(new ItemStack(ITEM_BACKPACK),
-                "LDL",
-                "LEL",
-                "LSL",
-                'L', Items.leather,
-                'D', Items.diamond,
-                'E', Blocks.ender_chest,
-                'S', Items.string);
+                                                              "LDL",
+                                                              "LEL",
+                                                              "LSL",
+                                                              'L', Items.leather,
+                                                              'D', Items.diamond,
+                                                              'E', Blocks.ender_chest,
+                                                              'S', Items.string);
         RECIPE_UPGRADE_BACKPACK = GameRegistry.addShapedRecipe(new ItemStack(ITEM_BACKPACK),
-                "DDD",
-                " B ",
-                "EEE",
-                'D', Items.diamond,
-                'B', ITEM_BACKPACK,
-                'E', Items.emerald);
+                                                               "DDD",
+                                                               " B ",
+                                                               "EEE",
+                                                               'D', Items.diamond,
+                                                               'B', ITEM_BACKPACK,
+                                                               'E', Items.emerald);
         FMLCommonHandler.instance().bus().register(this);
     }
 
