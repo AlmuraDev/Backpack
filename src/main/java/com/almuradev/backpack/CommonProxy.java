@@ -15,6 +15,7 @@ import com.almuradev.backpack.server.network.play.S00BackpackOpenRequest;
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
 import cpw.mods.fml.common.network.IGuiHandler;
 import cpw.mods.fml.common.network.NetworkRegistry;
+import cpw.mods.fml.common.registry.GameRegistry;
 import cpw.mods.fml.relauncher.Side;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Items;
@@ -24,12 +25,18 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.world.World;
 
 public class CommonProxy implements IGuiHandler {
+    public static final BackpackItem ITEM_BACKPACK = new BackpackItem();
 
     public void onPreInitialization(FMLPreInitializationEvent event) {
         Backpack.NETWORK_FORGE.registerMessage(C00BackpackOpenRequest.class, C00BackpackOpenRequest.class, 0, Side.SERVER);
         Backpack.NETWORK_FORGE.registerMessage(C01BackpackOpenResponse.class, C01BackpackOpenResponse.class, 1, Side.SERVER);
         Backpack.NETWORK_FORGE.registerMessage(S00BackpackOpenRequest.class, S00BackpackOpenRequest.class, 2, Side.CLIENT);
         NetworkRegistry.INSTANCE.registerGuiHandler(Backpack.INSTANCE, new CommonProxy());
+        GameRegistry.registerItem(ITEM_BACKPACK, ITEM_BACKPACK.getUnlocalizedName());
+    }
+
+    public BackpackDescriptor getDescriptor(EntityPlayer player) {
+        return null;
     }
 
     @Override
@@ -45,9 +52,8 @@ public class CommonProxy implements IGuiHandler {
                     break;
                 case 1:
                     final ItemStack stack = player.getHeldItem();
-                    //TODO Switch this to Backpack item
-                    if (stack != null && stack.getItem() == Items.bone) {
-                        inventory = InventoryUtil.loadFromNBT(new InventoryBasic(descriptor.title, true, descriptor.size), stack.getTagCompound());
+                    if (stack != null && stack.getItem() == CommonProxy.ITEM_BACKPACK) {
+                        inventory = InventoryUtil.loadFromNBT(stack.getTagCompound());
                     }
                     break;
                 default:
@@ -60,6 +66,6 @@ public class CommonProxy implements IGuiHandler {
 
     @Override
     public Object getClientGuiElement(int id, EntityPlayer player, World world, int x, int y, int z) {
-        return new BackpackGui(player.inventory, new InventoryBasic(ClientProxy.title, true, ClientProxy.size));
+        return new BackpackGui(player.inventory, new InventoryBasic(ClientProxy.descriptor.title, true, ClientProxy.descriptor.size));
     }
 }

@@ -12,12 +12,30 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Items;
 import net.minecraft.inventory.ContainerChest;
 import net.minecraft.inventory.IInventory;
+import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 
 public class BackpackContainer extends ContainerChest {
+    private final IInventory upperInventory;
 
     public BackpackContainer(IInventory upperInventory, IInventory lowerInventory) {
         super(upperInventory, lowerInventory);
+        this.upperInventory = upperInventory;
+    }
+
+    @Override
+    public ItemStack slotClick(int index, int p_slotClick_2_, int p_slotClick_3_, EntityPlayer player) {
+        final BackpackDescriptor descriptor = Backpack.PROXY.getDescriptor(player);
+
+        if (descriptor != null && descriptor.type == 1) {
+            if (index >= descriptor.size + upperInventory.getSizeInventory() - 13) {
+                final ItemStack stack = upperInventory.getStackInSlot(index - (descriptor.size + upperInventory.getSizeInventory() - 13));
+                if (stack != null && stack == player.getHeldItem()) {
+                    return null;
+                }
+            }
+        }
+        return super.slotClick(index, p_slotClick_2_, p_slotClick_3_, player);
     }
 
     @Override
@@ -34,8 +52,7 @@ public class BackpackContainer extends ContainerChest {
                         break;
                     case 1:
                         final ItemStack stack = player.getHeldItem();
-                        //TODO Switch to Backpack Item
-                        if (stack != null && stack.getItem() == Items.bone) {
+                        if (stack != null && stack.getItem() == CommonProxy.ITEM_BACKPACK) {
                             stack.setTagCompound(InventoryUtil.saveToNBT(getLowerChestInventory(), stack.getTagCompound()));
                         }
                         break;

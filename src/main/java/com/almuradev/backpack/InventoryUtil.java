@@ -6,6 +6,7 @@
 package com.almuradev.backpack;
 
 import net.minecraft.inventory.IInventory;
+import net.minecraft.inventory.InventoryBasic;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
@@ -13,13 +14,15 @@ import net.minecraftforge.common.util.Constants;
 
 public class InventoryUtil {
 
-    private static final String TAG_COMPOUND = "ExtendedInventory";
-    private static final String TAG_WORLDS = "Worlds";
-    private static final String TAG_DIMENSIONS = "Dimensions";
-    private static final String TAG_SLOTS = "Slots";
-    private static final String TAG_WORLD = "World";
-    private static final String TAG_DIMENSION = "Dimension";
-    private static final String TAG_SLOT = "Slot";
+    public static final String TAG_COMPOUND = "ExtendedInventory";
+    public static final String TAG_WORLDS = "Worlds";
+    public static final String TAG_DIMENSIONS = "Dimensions";
+    public static final String TAG_SLOTS = "Slots";
+    public static final String TAG_WORLD = "World";
+    public static final String TAG_DIMENSION = "Dimension";
+    public static final String TAG_SLOT = "Slot";
+    public static final String TAG_TITLE = "Title";
+    public static final String TAG_SIZE = "Size";
 
     /**
      * Loads an {@link IInventory} from a {@link NBTTagCompound} which is mapped to a World name and Dimension id.
@@ -71,12 +74,14 @@ public class InventoryUtil {
 
     /**
      * Loads an {@link IInventory} from a {@link NBTTagCompound}.
-     * @param inv The inventory to be populated
      * @param compound The compound to read from
      */
-    public static IInventory loadFromNBT(IInventory inv, NBTTagCompound compound) {
+    public static IInventory loadFromNBT(NBTTagCompound compound) {
         if (compound != null) {
             final NBTTagCompound inventoryCompound = compound.getCompoundTag(TAG_COMPOUND);
+            final String title = inventoryCompound.getString(TAG_TITLE);
+            final int size = inventoryCompound.getInteger(TAG_SIZE);
+            final InventoryBasic inv = new InventoryBasic(title, true, size);
             final NBTTagList items = inventoryCompound.getTagList(TAG_SLOTS, Constants.NBT.TAG_COMPOUND);
             for (int i = 0; i < items.tagCount(); i++) {
                 final NBTTagCompound item = items.getCompoundTagAt(i);
@@ -85,8 +90,9 @@ public class InventoryUtil {
                     inv.setInventorySlotContents(slotIndex, ItemStack.loadItemStackFromNBT(item));
                 }
             }
+            return inv;
         }
-        return inv;
+        return null;
     }
 
     /**
@@ -165,6 +171,8 @@ public class InventoryUtil {
         }
 
         final NBTTagCompound inventoryCompound = compound.getCompoundTag(TAG_COMPOUND);
+        inventoryCompound.setString(TAG_TITLE, inv.getInventoryName());
+        inventoryCompound.setInteger(TAG_SIZE, inv.getSizeInventory());
 
         final NBTTagList slots = new NBTTagList();
         for (int i = 0; i < inv.getSizeInventory(); i++) {
@@ -177,6 +185,18 @@ public class InventoryUtil {
             }
         }
         inventoryCompound.setTag(TAG_SLOTS, slots);
+        compound.setTag(TAG_COMPOUND, inventoryCompound);
+        return compound;
+    }
+
+    public static NBTTagCompound initNBTFor(String title, int size, NBTTagCompound compound) {
+        if (compound == null) {
+            compound = new NBTTagCompound();
+        }
+
+        final NBTTagCompound inventoryCompound = compound.getCompoundTag(TAG_COMPOUND);
+        inventoryCompound.setString(TAG_TITLE, title);
+        inventoryCompound.setInteger(TAG_SIZE, size);
         compound.setTag(TAG_COMPOUND, inventoryCompound);
         return compound;
     }

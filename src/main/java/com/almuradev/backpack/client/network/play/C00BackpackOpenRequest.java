@@ -5,6 +5,7 @@
  */
 package com.almuradev.backpack.client.network.play;
 
+import com.almuradev.backpack.CommonProxy;
 import com.almuradev.backpack.server.BackpackDescriptor;
 import com.almuradev.backpack.server.ServerProxy;
 import com.almuradev.backpack.server.network.play.S00BackpackOpenRequest;
@@ -13,7 +14,6 @@ import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
 import cpw.mods.fml.common.network.simpleimpl.MessageContext;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.init.Items;
 import net.minecraft.item.ItemStack;
 
 public class C00BackpackOpenRequest implements IMessage, IMessageHandler<C00BackpackOpenRequest, S00BackpackOpenRequest> {
@@ -40,13 +40,12 @@ public class C00BackpackOpenRequest implements IMessage, IMessageHandler<C00Back
     @Override
     public S00BackpackOpenRequest onMessage(C00BackpackOpenRequest message, MessageContext ctx) {
         if (ctx.side.isServer()) {
-            //TODO Need to figure out title and size to use based on type
             final BackpackDescriptor descriptor = buildFromType(message, ctx);
             if (descriptor == null) {
                 return null;
             }
             ServerProxy.DESCRIPTOR_MAP.put(ctx.getServerHandler().playerEntity.getCommandSenderName(), descriptor);
-            return new S00BackpackOpenRequest(descriptor.title, descriptor.size);
+            return new S00BackpackOpenRequest(descriptor.type, descriptor.title, descriptor.size);
         }
         return null;
     }
@@ -60,8 +59,7 @@ public class C00BackpackOpenRequest implements IMessage, IMessageHandler<C00Back
             case 1:
                 final EntityPlayer player = ctx.getServerHandler().playerEntity;
                 final ItemStack stack = player.getHeldItem();
-                //TODO Switch to Backpack Item
-                if (stack != null && stack.getItem() == Items.bone) {
+                if (stack != null && stack.getItem() == CommonProxy.ITEM_BACKPACK) {
                     return new BackpackDescriptor(message.type, "Backpack", 9);
                 }
         }
