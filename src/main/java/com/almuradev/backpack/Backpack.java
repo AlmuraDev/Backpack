@@ -18,6 +18,7 @@ import org.apache.logging.log4j.Logger;
 
 @Mod(modid = Backpack.MOD_ID)
 public class Backpack {
+
     public static final String MOD_ID = "backpack";
     public static final Logger LOGGER = LogManager.getLogger(Backpack.class);
     public static final SimpleNetworkWrapper NETWORK_FORGE = new SimpleNetworkWrapper("BK|FOR");

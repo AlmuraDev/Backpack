@@ -6,6 +6,8 @@
 package com.almuradev.backpack.client.network.play;
 
 import com.almuradev.backpack.Backpack;
+import com.almuradev.backpack.server.BackpackDescriptor;
+import com.almuradev.backpack.server.ServerProxy;
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
 import cpw.mods.fml.common.network.simpleimpl.MessageContext;
@@ -26,7 +28,10 @@ public class C01BackpackOpenResponse implements IMessage, IMessageHandler<C01Bac
     public IMessage onMessage(C01BackpackOpenResponse message, MessageContext ctx) {
         if (ctx.side.isServer()) {
             final EntityPlayerMP player = ctx.getServerHandler().playerEntity;
-            player.openGui(Backpack.INSTANCE, 0, player.worldObj, (int) player.posX, (int) player.posY, (int) player.posZ);
+            final BackpackDescriptor descriptor = ServerProxy.DESCRIPTOR_MAP.get(player.getCommandSenderName());
+            if (descriptor != null) {
+                player.openGui(Backpack.INSTANCE, descriptor.type, player.worldObj, (int) player.posX, (int) player.posY, (int) player.posZ);
+            }
         }
         return null;
     }

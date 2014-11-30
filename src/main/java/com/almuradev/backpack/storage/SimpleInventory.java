@@ -12,6 +12,7 @@ import net.minecraft.nbt.NBTTagList;
 import net.minecraftforge.common.util.Constants;
 
 public class SimpleInventory extends InventoryBasic {
+
     private static final String TAG_COMPOUND = "ExtendedInventory";
     private static final String TAG_WORLDS = "Worlds";
     private static final String TAG_DIMENSIONS = "Dimensions";
@@ -25,6 +26,9 @@ public class SimpleInventory extends InventoryBasic {
     }
 
     public void fromNBT(String world, String dimension, NBTTagCompound compound) {
+        if (compound == null) {
+            return;
+        }
         final NBTTagCompound inventoryCompound = compound.getCompoundTag(TAG_COMPOUND);
         final NBTTagList worldsList = inventoryCompound.getTagList(TAG_WORLDS, Constants.NBT.TAG_COMPOUND);
         NBTTagCompound worldCompound = null;
@@ -69,7 +73,10 @@ public class SimpleInventory extends InventoryBasic {
         }
     }
 
-    public void toNBT(String world, String dimension, NBTTagCompound compound) {
+    public NBTTagCompound toNBT(String world, String dimension, NBTTagCompound compound) {
+        if (compound == null) {
+            compound = new NBTTagCompound();
+        }
         final NBTTagCompound inventoryCompound = compound.getCompoundTag(TAG_COMPOUND);
         final NBTTagList worldsList = inventoryCompound.getTagList(TAG_WORLDS, Constants.NBT.TAG_COMPOUND);
         NBTTagCompound worldCompound = null;
@@ -125,5 +132,6 @@ public class SimpleInventory extends InventoryBasic {
         //WORLDS -> INVENTORY
         inventoryCompound.setTag(TAG_WORLDS, worldsList);
         compound.setTag(TAG_COMPOUND, inventoryCompound);
+        return compound;
     }
 }

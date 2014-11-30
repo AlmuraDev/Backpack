@@ -17,6 +17,7 @@ import net.minecraft.client.settings.KeyBinding;
 import org.lwjgl.input.Keyboard;
 
 public class ClientProxy extends CommonProxy {
+
     public static final String CLASSPATH = "com.almuradev.backpack.client.ClientProxy";
     public static final KeyBinding BINDING_OPEN_BACKPACK = new KeyBinding("key.backpack", Keyboard.KEY_B, "key.categories.inventory");
     public static String title;
@@ -32,7 +33,7 @@ public class ClientProxy extends CommonProxy {
     @SubscribeEvent
     public void onKeyInput(KeyInputEvent event) {
         if (BINDING_OPEN_BACKPACK.isPressed()) {
-            Backpack.NETWORK_FORGE.sendToServer(new C00BackpackOpenRequest());
+            Backpack.NETWORK_FORGE.sendToServer(new C00BackpackOpenRequest(0));
         }
     }
 }
