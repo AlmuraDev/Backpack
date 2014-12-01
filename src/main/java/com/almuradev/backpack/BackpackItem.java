@@ -1,3 +1,8 @@
+/**
+ * This file is part of Backpack, All Rights Reserved.
+ *
+ * Copyright (c) 2014 AlmuraDev <http://github.com/AlmuraDev/>
+ */
 package com.almuradev.backpack;
 
 import com.almuradev.backpack.client.network.play.C00BackpackOpenRequest;
@@ -27,11 +32,11 @@ public class BackpackItem extends Item {
         } else {
             final NBTTagCompound compound = stack.getTagCompound();
             if (compound == null) {
-                stack.setTagCompound(InventoryUtil.initNBTFor("Backpack", 9, null));
+                stack.setTagCompound(InventoryUtil.initNBTFor("§9Backpack", 9, null));
             } else {
                 final NBTTagCompound found = stack.getTagCompound().getCompoundTag(InventoryUtil.TAG_COMPOUND);
                 if (found == null) {
-                    stack.setTagCompound(InventoryUtil.initNBTFor("Backpack", 9, stack.getTagCompound()));
+                    stack.setTagCompound(InventoryUtil.initNBTFor("§9Backpack", 9, stack.getTagCompound()));
                 }
             }
         }

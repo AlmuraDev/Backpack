@@ -55,7 +55,7 @@ public class C00BackpackOpenRequest implements IMessage, IMessageHandler<C00Back
         switch (message.type) {
             // Keyboard
             case 0:
-                return new BackpackDescriptor(message.type, "\u00A79Backpack", 54);
+                return new BackpackDescriptor(message.type, "§9Backpack", 54);
             // Item in hand
             case 1:
                 final EntityPlayer player = ctx.getServerHandler().playerEntity;
