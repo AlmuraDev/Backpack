@@ -37,6 +37,7 @@ import org.spongepowered.api.world.World;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.Iterator;
 import java.util.Optional;
 import java.util.Set;
 
@@ -77,5 +78,15 @@ public class BackpackFactory {
         }
 
         return Optional.empty();
+    }
+
+    public static void put(BackpackInventory inventory) {
+        final Iterator<BackpackInventory> iter = BACKPACKS.iterator();
+        while (iter.hasNext()) {
+            if (iter.next().equals(inventory)) {
+                iter.remove();
+            }
+        }
+        BACKPACKS.add(inventory);
     }
 }

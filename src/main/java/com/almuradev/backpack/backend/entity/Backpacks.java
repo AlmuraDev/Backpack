@@ -42,6 +42,7 @@ import javax.persistence.UniqueConstraint;
 @Entity
 @Table(name = "bp_backpacks", uniqueConstraints = {@UniqueConstraint(columnNames = {"backpackId", "world_unique_id", "player_unique_id"})})
 public class Backpacks {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     long backpackId;
@@ -60,6 +61,10 @@ public class Backpacks {
 
     @OneToMany(mappedBy="backpacks")
     private Set<Slots> slots = Sets.newHashSet();
+
+    public long getBackpackId() {
+        return backpackId;
+    }
 
     public UUID getPlayerUniqueId() {
         return playerUniqueId;

@@ -79,6 +79,19 @@ public class Backpack {
                     }
                     return CommandResult.success();
                 })
+                .child(CommandSpec.builder()
+                        .permission("backpack.command.upgrade")
+                        .description(Texts.of("Upgrades your backpack"))
+                        .arguments(GenericArguments.playerOrSource(Texts.of("player"), event.getGame()))
+                        .executor((src, args) -> {
+                            final Player player = args.<Player>getOne("player").orElse(null);
+                            final Optional<BackpackInventory> optBackpackInventory = BackpackFactory.get(player.getWorld(), player);
+                            if (optBackpackInventory.isPresent()) {
+                                DatabaseManager.upgrade(DatabaseManager.getSessionFactory().openSession(), optBackpackInventory.get());
+                            }
+                            return CommandResult.success();
+                        })
+                        .build(), "upgrade", "up")
                 .build(), "backpack", "bp");
         DatabaseManager.init(Paths.get(".\\config\\backpack"), "backpacks");
     }

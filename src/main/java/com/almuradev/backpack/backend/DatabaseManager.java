@@ -25,6 +25,7 @@
 package com.almuradev.backpack.backend;
 
 import com.almuradev.backpack.Backpack;
+import com.almuradev.backpack.BackpackFactory;
 import com.almuradev.backpack.BackpackInventory;
 import com.almuradev.backpack.backend.entity.Backpacks;
 import com.almuradev.backpack.backend.entity.Slots;
@@ -135,6 +136,25 @@ public class DatabaseManager {
         inventory.setInventorySlotContents(slotIndex, (net.minecraft.item.ItemStack) (Object) slotStack);
     }
 
+    public static void upgrade(Session session, BackpackInventory inventory) {
+        final int newSize = inventory.getRecord().getSize() + 9;
+        final Backpacks record = (Backpacks) session.createCriteria(Backpacks.class).add(Restrictions.eq("backpackId", inventory.getRecord()
+                .getBackpackId())).uniqueResult();
+        if (record != null) {
+            record.setSize(newSize);
+            session.beginTransaction();
+            session.saveOrUpdate(record);
+            session.getTransaction().commit();
+
+            final BackpackInventory upgraded = new BackpackInventory(record);
+            for (int i = 0; i < inventory.getSizeInventory(); i++) {
+                upgraded.setInventorySlotContents(i, inventory.getStackInSlot(i));
+            }
+
+            BackpackFactory.put(upgraded);
+        }
+        session.close();
+    }
     private static String clobToString(java.sql.Clob data) throws SQLException, IOException {
         final StringBuilder sb = new StringBuilder();
         final Reader reader = data.getCharacterStream();
