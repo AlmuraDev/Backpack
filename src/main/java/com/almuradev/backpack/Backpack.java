@@ -41,6 +41,8 @@ import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.plugin.Plugin;
 import org.spongepowered.api.service.config.DefaultConfig;
 import org.spongepowered.api.text.Texts;
+import org.spongepowered.api.text.format.TextColors;
+import org.spongepowered.api.util.command.CommandException;
 import org.spongepowered.api.util.command.CommandResult;
 import org.spongepowered.api.util.command.args.GenericArguments;
 import org.spongepowered.api.util.command.spec.CommandSpec;
@@ -92,6 +94,27 @@ public class Backpack {
                             return CommandResult.success();
                         })
                         .build(), "upgrade", "up")
+                .child(CommandSpec.builder()
+                        .permission("backpack.command.view")
+                        .description(Texts.of("Lets you view another backpack"))
+                        .arguments(GenericArguments.string(Texts.of("player")))
+                        .executor((src, args) -> {
+                            if (!(src instanceof Player)) {
+                                throw new CommandException(Texts.of(TextColors.RED, "Must be in-game to view another backpack!"));
+                            }
+                            final String playerOrUser = args.<String>getOne("player").orElse(null);
+                            final Player player = event.getGame().getServer().getPlayer(playerOrUser).orElse(null);
+                            if (player == null) {
+                                // TODO Handle User objects
+                            } else {
+                                final Optional<BackpackInventory> optBackpackInventory = BackpackFactory.get(player.getWorld(), player);
+                                if (optBackpackInventory.isPresent()) {
+                                    ((EntityPlayerMP) src).displayGUIChest(optBackpackInventory.get());
+                                }
+                            }
+                            return CommandResult.success();
+                        })
+                        .build(), "view", "vw")
                 .build(), "backpack", "bp");
         DatabaseManager.init(Paths.get(".\\config\\backpack"), "backpacks");
     }
