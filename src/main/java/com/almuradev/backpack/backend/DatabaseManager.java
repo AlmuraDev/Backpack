@@ -24,14 +24,34 @@
  */
 package com.almuradev.backpack.backend;
 
+import com.almuradev.backpack.Backpack;
+import com.almuradev.backpack.BackpackInventory;
 import com.almuradev.backpack.backend.entity.Backpacks;
 import com.almuradev.backpack.backend.entity.Slots;
+import com.google.common.io.CharSink;
+import com.google.common.io.CharSource;
+import ninja.leaping.configurate.hocon.HoconConfigurationLoader;
+import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.cfg.Configuration;
+import org.hibernate.criterion.Restrictions;
+import org.spongepowered.api.data.DataContainer;
+import org.spongepowered.api.data.DataView;
+import org.spongepowered.api.data.translator.ConfigurateTranslator;
+import org.spongepowered.api.item.inventory.ItemStack;
+import org.spongepowered.api.service.persistence.SerializationService;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.IOException;
+import java.io.Reader;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.nio.file.Path;
+import java.sql.SQLException;
+
+import javax.sql.rowset.serial.SerialClob;
 
 public class DatabaseManager {
 
@@ -42,7 +62,7 @@ public class DatabaseManager {
     public static final String DATA_SOURCE_PREFIX = "jdbc:h2:";
     public static final String DATA_SOURCE_SUFFIX = ";AUTO_SERVER=TRUE";
     // ONLY SET THIS TO CREATE WHILE IN DEV, OTHERWISE THIS MUST BE UPDATE -- Zidane
-    public static final String AUTO_SCHEMA_MODE = "create";
+    public static final String AUTO_SCHEMA_MODE = "update";
 
     private static SessionFactory sessionFactory;
 
@@ -66,5 +86,74 @@ public class DatabaseManager {
 
     public static SessionFactory getSessionFactory() {
         return sessionFactory;
+    }
+
+    public static void saveSlot(Session session, Backpacks backpack, int slotIndex, DataContainer slotData) throws IOException, SQLException {
+        Slots slotsRecord = (Slots) session.createCriteria(Slots.class).add(Restrictions.and(Restrictions.eq("backpacks", backpack),
+                Restrictions.eq("slot", slotIndex))).uniqueResult();
+
+        if (slotData == null && slotsRecord != null) {
+            session.delete(slotsRecord);
+        } else if (slotData != null && slotsRecord != null) {
+            final StringWriter writer = new StringWriter();
+            HoconConfigurationLoader loader = HoconConfigurationLoader.builder().setSink(new CharSink() {
+                @Override
+                public Writer openStream() throws IOException {
+                    return writer;
+                }
+            }).build();
+            loader.save(ConfigurateTranslator.instance().translateData(slotData));
+            slotsRecord.setData(new SerialClob(writer.toString().toCharArray()));
+            session.saveOrUpdate(slotsRecord);
+        } else if (slotData != null) {
+            slotsRecord = new Slots();
+            slotsRecord.setBackpacks(backpack);
+            slotsRecord.setSlot(slotIndex);
+            final StringWriter writer = new StringWriter();
+            HoconConfigurationLoader loader = HoconConfigurationLoader.builder().setSink(new CharSink() {
+                @Override
+                public Writer openStream() throws IOException {
+                    return writer;
+                }
+            }).build();
+            loader.save(ConfigurateTranslator.instance().translateData(slotData));
+            slotsRecord.setData(new SerialClob(writer.toString().toCharArray()));
+            session.saveOrUpdate(slotsRecord);
+        }
+    }
+
+    public static void loadSlot(Session session, BackpackInventory inventory, int slotIndex) throws IOException {
+        Slots slotsRecord = (Slots) session.createCriteria(Slots.class).add(Restrictions.and(Restrictions.eq("backpacks", inventory.getRecord()),
+                Restrictions.eq("slot", slotIndex))).uniqueResult();
+        if (slotsRecord == null) {
+            return;
+        }
+        final DataView view = ConfigurateTranslator.instance().translateFrom(HoconConfigurationLoader.builder().setSource(CharSource.wrap
+                (clobToString(slotsRecord.getData()))).build().load());
+        final ItemStack slotStack = Backpack.instance.game.getServiceManager().provide(SerializationService.class).get().getBuilder(ItemStack.class)
+                .get().build(view).get();
+        inventory.setInventorySlotContents(slotIndex, (net.minecraft.item.ItemStack) (Object) slotStack);
+    }
+
+    private static String clobToString(java.sql.Clob data) {
+        final StringBuilder sb = new StringBuilder();
+
+        try {
+            final Reader reader = data.getCharacterStream();
+            final BufferedReader br = new BufferedReader(reader);
+
+            int b;
+            while (-1 != (b = br.read())) {
+                sb.append((char) b);
+            }
+
+            br.close();
+        } catch (SQLException e) {
+            return e.toString();
+        } catch (IOException e) {
+            return e.toString();
+        }
+
+        return sb.toString();
     }
 }

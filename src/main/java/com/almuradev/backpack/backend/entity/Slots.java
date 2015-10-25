@@ -1,55 +1,55 @@
 package com.almuradev.backpack.backend.entity;
 
-import java.util.UUID;
+import java.sql.Clob;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
 @Entity
-@Table(name = "bp_slots", uniqueConstraints = {@UniqueConstraint(columnNames = {"player_unique_id", "world_unique_id", "slot"})})
+@Table(name = "bp_slots", uniqueConstraints = {@UniqueConstraint(columnNames = {"slotId"})})
 public class Slots {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    long id;
+    long slotId;
 
-    @Column(nullable = false, name = "world_unique_id")
-    private UUID worldUniqueId;
+    @ManyToOne(targetEntity = Backpacks.class)
+    @JoinColumn(name = "backpackId")
+    private Backpacks backpacks;
 
-    @Column(nullable = false, name = "player_unique_id")
-    private UUID playerUniqueId;
-
-    @Column(nullable = false, name = "slot")
+    @Column(nullable = false, name = "slotIndex")
     private int slot;
 
     @Column(nullable = false, name = "data")
-    private String data;
+    private Clob data;
 
-    public UUID getWorldUniqueId() {
-        return worldUniqueId;
+    public Backpacks getBackpacks() {
+        return backpacks;
     }
 
-    public void setWorldUniqueId(UUID worldUniqueId) {
-        this.worldUniqueId = worldUniqueId;
+    public void setBackpacks(Backpacks backpacks) {
+        this.backpacks = backpacks;
     }
 
-    public UUID getPlayerUniqueId() {
-        return playerUniqueId;
+    public int getSlot() {
+        return slot;
     }
 
-    public void setPlayerUniqueId(UUID playerUniqueId) {
-        this.playerUniqueId = playerUniqueId;
+    public void setSlot(int slot) {
+        this.slot = slot;
     }
 
-    public String getData() {
+    public Clob getData() {
         return data;
     }
 
-    public void setData(String data) {
+    public void setData(Clob data) {
         this.data = data;
     }
 }

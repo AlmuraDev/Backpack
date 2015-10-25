@@ -24,6 +24,10 @@
  */
 package com.almuradev.backpack.backend.entity;
 
+import com.google.common.collect.Sets;
+
+import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 
 import javax.persistence.Column;
@@ -31,15 +35,16 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
 @Entity
-@Table(name = "bp_backpacks", uniqueConstraints = {@UniqueConstraint(columnNames = {"player_unique_id", "world_unique_id"})})
+@Table(name = "bp_backpacks", uniqueConstraints = {@UniqueConstraint(columnNames = {"backpackId", "world_unique_id", "player_unique_id"})})
 public class Backpacks {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    long id;
+    long backpackId;
 
     @Column(nullable = false, name = "world_unique_id")
     private UUID worldUniqueId;
@@ -53,8 +58,8 @@ public class Backpacks {
     @Column(nullable = false, name = "size")
     private int size;
 
-    @Column(nullable = false, name = "slots")
-    private Slots slots;
+    @OneToMany(mappedBy="backpacks")
+    private Set<Slots> slots = Sets.newHashSet();
 
     public UUID getPlayerUniqueId() {
         return playerUniqueId;
@@ -86,5 +91,31 @@ public class Backpacks {
 
     public void setSize(int size) {
         this.size = size;
+    }
+
+    public Set<Slots> getSlots() {
+        return slots;
+    }
+
+    public void setSlots(Set<Slots> slots) {
+        this.slots = slots;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final Backpacks backpacks = (Backpacks) o;
+        return Objects.equals(worldUniqueId, backpacks.worldUniqueId) &&
+                Objects.equals(playerUniqueId, backpacks.playerUniqueId);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(worldUniqueId, playerUniqueId);
     }
 }
