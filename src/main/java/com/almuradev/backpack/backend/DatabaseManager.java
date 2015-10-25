@@ -122,7 +122,7 @@ public class DatabaseManager {
         }
     }
 
-    public static void loadSlot(Session session, BackpackInventory inventory, int slotIndex) throws IOException {
+    public static void loadSlot(Session session, BackpackInventory inventory, int slotIndex) throws IOException, SQLException {
         Slots slotsRecord = (Slots) session.createCriteria(Slots.class).add(Restrictions.and(Restrictions.eq("backpacks", inventory.getRecord()),
                 Restrictions.eq("slot", slotIndex))).uniqueResult();
         if (slotsRecord == null) {
@@ -135,24 +135,17 @@ public class DatabaseManager {
         inventory.setInventorySlotContents(slotIndex, (net.minecraft.item.ItemStack) (Object) slotStack);
     }
 
-    private static String clobToString(java.sql.Clob data) {
+    private static String clobToString(java.sql.Clob data) throws SQLException, IOException {
         final StringBuilder sb = new StringBuilder();
+        final Reader reader = data.getCharacterStream();
+        final BufferedReader br = new BufferedReader(reader);
 
-        try {
-            final Reader reader = data.getCharacterStream();
-            final BufferedReader br = new BufferedReader(reader);
-
-            int b;
-            while (-1 != (b = br.read())) {
-                sb.append((char) b);
-            }
-
-            br.close();
-        } catch (SQLException e) {
-            return e.toString();
-        } catch (IOException e) {
-            return e.toString();
+        int b;
+        while (-1 != (b = br.read())) {
+            sb.append((char) b);
         }
+
+        br.close();
 
         return sb.toString();
     }

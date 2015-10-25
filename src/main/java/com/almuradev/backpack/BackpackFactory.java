@@ -36,13 +36,14 @@ import org.spongepowered.api.text.format.TextColors;
 import org.spongepowered.api.world.World;
 
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.Optional;
 import java.util.Set;
 
 public class BackpackFactory {
     private static final Set<BackpackInventory> BACKPACKS = Sets.newConcurrentHashSet();
 
-    public static BackpackInventory load(World world, Player player) throws IOException {
+    public static BackpackInventory load(World world, Player player) throws IOException, SQLException {
         final Session session = DatabaseManager.getSessionFactory().openSession();
         final Criteria criteria = session.createCriteria(Backpacks.class);
         Backpacks record = (Backpacks) criteria.add(Restrictions.and(Restrictions.eq("worldUniqueId", world.getUniqueId()), Restrictions.eq

@@ -84,7 +84,7 @@ public class Backpack {
     }
 
     @Listener
-    public void onClientConnectionEventJoin(ClientConnectionEvent.Join event) throws IOException {
+    public void onClientConnectionEventJoin(ClientConnectionEvent.Join event) throws IOException, SQLException {
         BackpackFactory.load(event.getTargetEntity().getWorld(), event.getTargetEntity());
     }
 
