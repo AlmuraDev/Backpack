@@ -30,6 +30,7 @@ import net.minecraft.inventory.InventoryBasic;
 import java.util.Objects;
 
 public class BackpackInventory extends InventoryBasic {
+
     private final Backpacks record;
 
     public BackpackInventory(Backpacks record) {

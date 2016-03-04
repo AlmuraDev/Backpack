@@ -28,8 +28,6 @@ import com.almuradev.backpack.BackpackFactory;
 import com.almuradev.backpack.BackpackInventory;
 import com.almuradev.backpack.backend.entity.Backpacks;
 import com.almuradev.backpack.backend.entity.Slots;
-import com.google.common.io.CharSink;
-import com.google.common.io.CharSource;
 import ninja.leaping.configurate.hocon.HoconConfigurationLoader;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
@@ -48,7 +46,6 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
-import java.io.Writer;
 import java.nio.file.Path;
 import java.sql.SQLException;
 
@@ -61,7 +58,7 @@ public class DatabaseManager {
     public static final String DIALECT = "org.hibernate.dialect.H2Dialect";
     public static final String DRIVER_CLASSPATH = "org.h2.jdbcx.JdbcDataSource";
     public static final String DATA_SOURCE_PREFIX = "jdbc:h2:";
-    public static final String DATA_SOURCE_SUFFIX = ";AUTO_SERVER=TRUE";
+    public static final String DATA_SOURCE_SUFFIX = ";AUTO_SERVER=TRUE;MV_STORE=FALSE;MVCC=FALSE";
     // ONLY SET THIS TO CREATE WHILE IN DEV, OTHERWISE THIS MUST BE UPDATE -- Zidane
     public static final String AUTO_SCHEMA_MODE = "update";
 
@@ -125,8 +122,20 @@ public class DatabaseManager {
         inventory.setInventorySlotContents(slotIndex, (net.minecraft.item.ItemStack) (Object) slotStack);
     }
 
-    public static void upgrade(Session session, BackpackInventory inventory) {
-        final int newSize = inventory.getRecord().getSize() + 9;
+    public static boolean upgrade(Session session, BackpackInventory inventory) {
+        return change(session, inventory, 9);
+    }
+
+    public static boolean downgrade(Session session, BackpackInventory inventory) {
+        return change(session, inventory, -9);
+    }
+
+    private static boolean change(Session session, BackpackInventory inventory, int value) {
+        final int newSize = inventory.getRecord().getSize() + value;
+        if (newSize >= 54 || newSize <= 9) {
+            session.close();
+            return false;
+        }
         final Backpacks record = (Backpacks) session.createCriteria(Backpacks.class).add(Restrictions.eq("backpackId", inventory.getRecord()
                 .getBackpackId())).uniqueResult();
         if (record != null) {
@@ -141,9 +150,13 @@ public class DatabaseManager {
             }
 
             BackpackFactory.put(upgraded);
+            session.close();
+            return true;
         }
         session.close();
+        return false;
     }
+
     private static String clobToString(java.sql.Clob data) throws SQLException, IOException {
         final StringBuilder sb = new StringBuilder();
         final Reader reader = data.getCharacterStream();

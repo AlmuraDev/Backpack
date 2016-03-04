@@ -39,6 +39,7 @@ import javax.persistence.UniqueConstraint;
 @Entity
 @Table(name = "bp_slots", uniqueConstraints = {@UniqueConstraint(columnNames = {"slotId"})})
 public class Slots {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     long slotId;

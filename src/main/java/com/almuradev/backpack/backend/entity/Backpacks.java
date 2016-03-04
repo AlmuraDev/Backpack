@@ -59,7 +59,7 @@ public class Backpacks {
     @Column(nullable = false, name = "size")
     private int size;
 
-    @OneToMany(mappedBy="backpacks")
+    @OneToMany(mappedBy = "backpacks")
     private Set<Slots> slots = Sets.newHashSet();
 
     public long getBackpackId() {

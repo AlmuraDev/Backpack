@@ -31,7 +31,6 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.inventory.Container;
 import net.minecraft.inventory.ContainerChest;
 import org.hibernate.Session;
-import org.spongepowered.api.Game;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.CommandResult;
@@ -88,7 +87,11 @@ public class Backpack {
                             final Player player = args.<Player>getOne("player").orElse(null);
                             final Optional<BackpackInventory> optBackpackInventory = BackpackFactory.get(player.getWorld(), player);
                             if (optBackpackInventory.isPresent()) {
-                                DatabaseManager.upgrade(DatabaseManager.getSessionFactory().openSession(), optBackpackInventory.get());
+                                boolean upgraded = DatabaseManager.upgrade(DatabaseManager.getSessionFactory().openSession(), optBackpackInventory.get());
+                                player.sendMessage(Text.of("Your backpack was upgraded!"));
+                                if (src != player && upgraded) {
+                                    src.sendMessage(Text.of(player.getName() + "'s backpack was upgraded."));
+                                }
                             }
                             return CommandResult.success();
                         })
