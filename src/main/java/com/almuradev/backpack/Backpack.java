@@ -26,11 +26,14 @@ package com.almuradev.backpack;
 
 import com.almuradev.backpack.backend.DatabaseManager;
 import com.almuradev.backpack.backend.entity.Backpacks;
+import com.almuradev.backpack.inventory.BackpackChangeResult;
+import com.almuradev.backpack.inventory.BackpackInventory;
 import com.google.inject.Inject;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.inventory.Container;
 import net.minecraft.inventory.ContainerChest;
 import org.hibernate.Session;
+import org.omg.PortableInterceptor.SUCCESSFUL;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.CommandResult;
@@ -87,15 +90,28 @@ public class Backpack {
                             final Player player = args.<Player>getOne("player").orElse(null);
                             final Optional<BackpackInventory> optBackpackInventory = BackpackFactory.get(player.getWorld(), player);
                             if (optBackpackInventory.isPresent()) {
-                                boolean upgraded = DatabaseManager.upgrade(DatabaseManager.getSessionFactory().openSession(), optBackpackInventory.get());
-                                player.sendMessage(Text.of("Your backpack was upgraded!"));
-                                if (src != player && upgraded) {
-                                    src.sendMessage(Text.of(player.getName() + "'s backpack was upgraded."));
-                                }
+                                BackpackChangeResult result = DatabaseManager.upgrade(DatabaseManager.getSessionFactory().openSession(),
+                                        optBackpackInventory.get());
+                                BackpackChangeResult.sendResultText(result, src, player);
                             }
                             return CommandResult.success();
                         })
                         .build(), "upgrade", "up")
+                .child(CommandSpec.builder()
+                        .permission("backpack.command.downgrade")
+                        .description(Text.of("Downgrade your backpack"))
+                        .arguments(GenericArguments.playerOrSource(Text.of("player")))
+                        .executor((src, args) -> {
+                            final Player player = args.<Player>getOne("player").orElse(null);
+                            final Optional<BackpackInventory> optBackpackInventory = BackpackFactory.get(player.getWorld(), player);
+                            if (optBackpackInventory.isPresent()) {
+                                BackpackChangeResult result = DatabaseManager.downgrade(DatabaseManager.getSessionFactory().openSession(),
+                                        optBackpackInventory.get());
+                                BackpackChangeResult.sendResultText(result, src, player);
+                            }
+                            return CommandResult.success();
+                        })
+                        .build(), "downgrade", "down")
                 .child(CommandSpec.builder()
                         .permission("backpack.command.view")
                         .description(Text.of("Lets you view another backpack"))

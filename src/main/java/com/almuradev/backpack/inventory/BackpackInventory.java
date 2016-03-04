@@ -22,7 +22,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.almuradev.backpack;
+package com.almuradev.backpack.inventory;
 
 import com.almuradev.backpack.backend.entity.Backpacks;
 import net.minecraft.inventory.InventoryBasic;

@@ -25,7 +25,8 @@
 package com.almuradev.backpack.backend;
 
 import com.almuradev.backpack.BackpackFactory;
-import com.almuradev.backpack.BackpackInventory;
+import com.almuradev.backpack.inventory.BackpackChangeResult;
+import com.almuradev.backpack.inventory.BackpackInventory;
 import com.almuradev.backpack.backend.entity.Backpacks;
 import com.almuradev.backpack.backend.entity.Slots;
 import ninja.leaping.configurate.hocon.HoconConfigurationLoader;
@@ -122,39 +123,40 @@ public class DatabaseManager {
         inventory.setInventorySlotContents(slotIndex, (net.minecraft.item.ItemStack) (Object) slotStack);
     }
 
-    public static boolean upgrade(Session session, BackpackInventory inventory) {
+    public static BackpackChangeResult upgrade(Session session, BackpackInventory inventory) {
         return change(session, inventory, 9);
     }
 
-    public static boolean downgrade(Session session, BackpackInventory inventory) {
+    public static BackpackChangeResult downgrade(Session session, BackpackInventory inventory) {
         return change(session, inventory, -9);
     }
 
-    private static boolean change(Session session, BackpackInventory inventory, int value) {
-        final int newSize = inventory.getRecord().getSize() + value;
-        if (newSize >= 54 || newSize <= 9) {
+    private static BackpackChangeResult change(Session session, BackpackInventory inventory, int value) {
+        final int originalSize = inventory.getRecord().getSize();
+        final int targetSize = originalSize + value;
+        if (originalSize <= 9 && targetSize <= originalSize || originalSize >= 54 && targetSize >= originalSize) {
             session.close();
-            return false;
+            return new BackpackChangeResult.LimitReached(targetSize, originalSize);
         }
         final Backpacks record = (Backpacks) session.createCriteria(Backpacks.class).add(Restrictions.eq("backpackId", inventory.getRecord()
                 .getBackpackId())).uniqueResult();
         if (record != null) {
-            record.setSize(newSize);
+            record.setSize(targetSize);
             session.beginTransaction();
             session.saveOrUpdate(record);
             session.getTransaction().commit();
 
-            final BackpackInventory upgraded = new BackpackInventory(record);
-            for (int i = 0; i < inventory.getSizeInventory(); i++) {
-                upgraded.setInventorySlotContents(i, inventory.getStackInSlot(i));
+            final BackpackInventory changed = new BackpackInventory(record);
+            for (int i = 0; i < record.getSize(); i++) {
+                changed.setInventorySlotContents(i, inventory.getStackInSlot(i));
             }
 
-            BackpackFactory.put(upgraded);
+            BackpackFactory.put(changed);
             session.close();
-            return true;
+            return new BackpackChangeResult.Success(originalSize, targetSize);
         }
         session.close();
-        return false;
+        return new BackpackChangeResult.Failure(targetSize, originalSize);
     }
 
     private static String clobToString(java.sql.Clob data) throws SQLException, IOException {

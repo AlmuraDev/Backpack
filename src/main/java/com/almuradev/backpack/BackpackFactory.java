@@ -26,6 +26,7 @@ package com.almuradev.backpack;
 
 import com.almuradev.backpack.backend.DatabaseManager;
 import com.almuradev.backpack.backend.entity.Backpacks;
+import com.almuradev.backpack.inventory.BackpackInventory;
 import com.google.common.collect.Sets;
 import org.hibernate.Criteria;
 import org.hibernate.Session;
