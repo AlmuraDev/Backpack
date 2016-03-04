@@ -25,10 +25,10 @@
 package com.almuradev.backpack.backend;
 
 import com.almuradev.backpack.BackpackFactory;
-import com.almuradev.backpack.inventory.BackpackChangeResult;
-import com.almuradev.backpack.inventory.BackpackInventory;
 import com.almuradev.backpack.backend.entity.Backpacks;
 import com.almuradev.backpack.backend.entity.Slots;
+import com.almuradev.backpack.inventory.BackpackChangeResult;
+import com.almuradev.backpack.inventory.BackpackInventory;
 import ninja.leaping.configurate.hocon.HoconConfigurationLoader;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
