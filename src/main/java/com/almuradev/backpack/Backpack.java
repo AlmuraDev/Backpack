@@ -32,6 +32,12 @@ import net.minecraft.inventory.Container;
 import net.minecraft.inventory.ContainerChest;
 import org.hibernate.Session;
 import org.spongepowered.api.Game;
+import org.spongepowered.api.Sponge;
+import org.spongepowered.api.command.CommandException;
+import org.spongepowered.api.command.CommandResult;
+import org.spongepowered.api.command.args.GenericArguments;
+import org.spongepowered.api.command.spec.CommandSpec;
+import org.spongepowered.api.config.DefaultConfig;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.game.state.GamePreInitializationEvent;
@@ -39,13 +45,8 @@ import org.spongepowered.api.event.item.inventory.InteractInventoryEvent;
 import org.spongepowered.api.event.network.ClientConnectionEvent;
 import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.plugin.Plugin;
-import org.spongepowered.api.service.config.DefaultConfig;
-import org.spongepowered.api.text.Texts;
+import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.format.TextColors;
-import org.spongepowered.api.util.command.CommandException;
-import org.spongepowered.api.util.command.CommandResult;
-import org.spongepowered.api.util.command.args.GenericArguments;
-import org.spongepowered.api.util.command.spec.CommandSpec;
 
 import java.io.File;
 import java.io.IOException;
@@ -59,20 +60,18 @@ public class Backpack {
     public static final String PLUGIN_ID = "backpack", PLUGIN_NAME = "Backpack", PLUGIN_VERSION = "1.0";
     public static Backpack instance;
 
-    @Inject public Game game;
-    @Inject
     @DefaultConfig(sharedRoot = false)
-    private File configDir;
+    @Inject private File configDir;
 
     @Listener
     public void onPreInitialization(GamePreInitializationEvent event) {
         instance = this;
-        event.getGame().getCommandDispatcher().register(this, CommandSpec.builder()
+        Sponge.getGame().getCommandManager().register(this, CommandSpec.builder()
                 .permission("backpack.command.open")
-                .description(Texts.of("Opens your backpack"))
-                .arguments(GenericArguments.playerOrSource(Texts.of("player"), event.getGame()))
+                .description(Text.of("Opens your backpack"))
+                .arguments(GenericArguments.playerOrSource(Text.of("player")))
                 .executor((src, args) -> {
-                    if (event.getGame().getPlatform().getExecutionType().isServer()) {
+                    if (Sponge.getGame().getPlatform().getExecutionType().isServer()) {
                         final Player player = args.<Player>getOne("player").orElse(null);
                         final Optional<BackpackInventory> optBackpackInventory = BackpackFactory.get(player.getWorld(), player);
                         if (optBackpackInventory.isPresent()) {
@@ -83,8 +82,8 @@ public class Backpack {
                 })
                 .child(CommandSpec.builder()
                         .permission("backpack.command.upgrade")
-                        .description(Texts.of("Upgrades your backpack"))
-                        .arguments(GenericArguments.playerOrSource(Texts.of("player"), event.getGame()))
+                        .description(Text.of("Upgrades your backpack"))
+                        .arguments(GenericArguments.playerOrSource(Text.of("player")))
                         .executor((src, args) -> {
                             final Player player = args.<Player>getOne("player").orElse(null);
                             final Optional<BackpackInventory> optBackpackInventory = BackpackFactory.get(player.getWorld(), player);
@@ -96,14 +95,14 @@ public class Backpack {
                         .build(), "upgrade", "up")
                 .child(CommandSpec.builder()
                         .permission("backpack.command.view")
-                        .description(Texts.of("Lets you view another backpack"))
-                        .arguments(GenericArguments.string(Texts.of("player")))
+                        .description(Text.of("Lets you view another backpack"))
+                        .arguments(GenericArguments.string(Text.of("player")))
                         .executor((src, args) -> {
                             if (!(src instanceof Player)) {
-                                throw new CommandException(Texts.of(TextColors.RED, "Must be in-game to view another backpack!"));
+                                throw new CommandException(Text.of(TextColors.RED, "Must be in-game to view another backpack!"));
                             }
                             final String playerOrUser = args.<String>getOne("player").orElse(null);
-                            final Player player = event.getGame().getServer().getPlayer(playerOrUser).orElse(null);
+                            final Player player = Sponge.getServer().getPlayer(playerOrUser).orElse(null);
                             if (player == null) {
                                 // TODO Handle User objects
                             } else {

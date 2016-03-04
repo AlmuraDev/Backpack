@@ -31,8 +31,9 @@ import org.hibernate.Criteria;
 import org.hibernate.Session;
 import org.hibernate.criterion.Restrictions;
 import org.spongepowered.api.entity.living.player.Player;
-import org.spongepowered.api.text.Texts;
+import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.format.TextColors;
+import org.spongepowered.api.text.serializer.TextSerializers;
 import org.spongepowered.api.world.World;
 
 import java.io.IOException;
@@ -44,6 +45,7 @@ import java.util.Set;
 public class BackpackFactory {
     private static final Set<BackpackInventory> BACKPACKS = Sets.newConcurrentHashSet();
 
+    @SuppressWarnings("deprecation")
     public static BackpackInventory load(World world, Player player) throws IOException, SQLException {
         final Session session = DatabaseManager.getSessionFactory().openSession();
         final Criteria criteria = session.createCriteria(Backpacks.class);
@@ -55,7 +57,7 @@ public class BackpackFactory {
             record.setWorldUniqueId(world.getUniqueId());
             record.setPlayerUniqueId(player.getUniqueId());
             record.setSize(9);
-            record.setTitle(Texts.legacy().to(Texts.of(TextColors.AQUA, "My Backpack")));
+            record.setTitle(TextSerializers.LEGACY_FORMATTING_CODE.serialize(Text.of(TextColors.AQUA, "My Backpack")));
             session.beginTransaction();
             session.saveOrUpdate(record);
             session.getTransaction().commit();

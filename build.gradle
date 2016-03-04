@@ -11,7 +11,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'net.minecraftforge.gradle:ForgeGradle:2.0-SNAPSHOT'
+        classpath 'net.minecraftforge.gradle:ForgeGradle:2.1-SNAPSHOT'
         classpath 'gradle.plugin.nl.javadude.gradle.plugins:license-gradle-plugin:0.12.0'
     }
 }
@@ -41,8 +41,8 @@ repositories {
 }
 
 dependencies {
-    compile 'org.hibernate:hibernate-core:5.0.2.Final'
-    compile 'org.hibernate:hibernate-hikaricp:5.0.2.Final'
+    compile 'org.hibernate:hibernate-core:5.1.0.Final'
+    compile 'org.hibernate:hibernate-hikaricp:5.1.0.Final'
     compile "org.spongepowered:spongeapi:${project.apiVersion}"
 }
 

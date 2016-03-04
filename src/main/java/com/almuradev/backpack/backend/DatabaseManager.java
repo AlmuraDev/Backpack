@@ -24,7 +24,6 @@
  */
 package com.almuradev.backpack.backend;
 
-import com.almuradev.backpack.Backpack;
 import com.almuradev.backpack.BackpackFactory;
 import com.almuradev.backpack.BackpackInventory;
 import com.almuradev.backpack.backend.entity.Backpacks;
@@ -41,12 +40,13 @@ import org.spongepowered.api.data.DataContainer;
 import org.spongepowered.api.data.DataView;
 import org.spongepowered.api.data.translator.ConfigurateTranslator;
 import org.spongepowered.api.item.inventory.ItemStack;
-import org.spongepowered.api.service.persistence.SerializationService;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
+import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.nio.file.Path;
@@ -97,12 +97,7 @@ public class DatabaseManager {
             session.delete(slotsRecord);
         } else if (slotData != null && slotsRecord != null) {
             final StringWriter writer = new StringWriter();
-            HoconConfigurationLoader loader = HoconConfigurationLoader.builder().setSink(new CharSink() {
-                @Override
-                public Writer openStream() throws IOException {
-                    return writer;
-                }
-            }).build();
+            HoconConfigurationLoader loader = HoconConfigurationLoader.builder().setSink(() -> new BufferedWriter(writer)).build();
             loader.save(ConfigurateTranslator.instance().translateData(slotData));
             slotsRecord.setData(new SerialClob(writer.toString().toCharArray()));
             session.saveOrUpdate(slotsRecord);
@@ -111,12 +106,7 @@ public class DatabaseManager {
             slotsRecord.setBackpacks(backpack);
             slotsRecord.setSlot(slotIndex);
             final StringWriter writer = new StringWriter();
-            HoconConfigurationLoader loader = HoconConfigurationLoader.builder().setSink(new CharSink() {
-                @Override
-                public Writer openStream() throws IOException {
-                    return writer;
-                }
-            }).build();
+            HoconConfigurationLoader loader = HoconConfigurationLoader.builder().setSink(() -> new BufferedWriter(writer)).build();
             loader.save(ConfigurateTranslator.instance().translateData(slotData));
             slotsRecord.setData(new SerialClob(writer.toString().toCharArray()));
             session.saveOrUpdate(slotsRecord);
@@ -129,10 +119,9 @@ public class DatabaseManager {
         if (slotsRecord == null) {
             return;
         }
-        final DataView view = ConfigurateTranslator.instance().translateFrom(HoconConfigurationLoader.builder().setSource(CharSource.wrap
-                (clobToString(slotsRecord.getData()))).build().load());
-        final ItemStack slotStack = Backpack.instance.game.getServiceManager().provide(SerializationService.class).get().getBuilder(ItemStack.class)
-                .get().build(view).get();
+        final DataView view = ConfigurateTranslator.instance().translateFrom(HoconConfigurationLoader.builder().setSource(() -> new BufferedReader
+                (new StringReader(clobToString(slotsRecord.getData())))).build().load());
+        final ItemStack slotStack = ItemStack.builder().fromContainer(view).build();
         inventory.setInventorySlotContents(slotIndex, (net.minecraft.item.ItemStack) (Object) slotStack);
     }
 
