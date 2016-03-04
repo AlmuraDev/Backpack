@@ -57,25 +57,15 @@ public class BackpackChangeResult {
 
         } else if (result instanceof Failure) {
             final String format = "%s backpack was unable to be %s.";
-            if (src != player) {
-                src.sendMessage(Text.of(String.format(format,
-                        player.getName() + "'s",
-                        ((Failure) result).currentSize < ((Failure) result).targetSize ? "upgraded" : "downgraded")));
-            }
-            player.sendMessage(Text.of(String.format(format,
-                    "Your",
+            src.sendMessage(Text.of(String.format(format,
+                    src == player ? "Your" : player.getName() + "'s",
                     ((Failure) result).currentSize < ((Failure) result).targetSize ? "upgraded" : "downgraded")));
-
         } else if (result instanceof LimitReached) {
-            final String format = "%s backpack has already reached its %s size.";
-            if (src != player) {
-                src.sendMessage(Text.of(String.format(format,
-                        player.getName() + "'s",
-                        ((LimitReached) result).currentSize < ((LimitReached) result).targetSize ? "maximum" : "minimum")));
-            }
-            player.sendMessage(Text.of(String.format(format,
-                    "Your",
+            final String format = "%s backpack has already reached the %s size.";
+            src.sendMessage(Text.of(String.format(format,
+                    src == player ? "Your" : player.getName() + "'s",
                     ((LimitReached) result).currentSize < ((LimitReached) result).targetSize ? "maximum" : "minimum")));
+
         }
     }
 }
