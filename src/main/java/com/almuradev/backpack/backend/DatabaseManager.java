@@ -134,7 +134,7 @@ public class DatabaseManager {
     private static BackpackChangeResult change(Session session, BackpackInventory inventory, int value) {
         final int originalSize = inventory.getRecord().getSize();
         final int targetSize = originalSize + value;
-        if (originalSize <= 9 && targetSize <= originalSize || originalSize >= 54 && targetSize >= originalSize) {
+        if (targetSize < 9 || targetSize > 54) {
             session.close();
             return new BackpackChangeResult.LimitReached(targetSize, originalSize);
         }
