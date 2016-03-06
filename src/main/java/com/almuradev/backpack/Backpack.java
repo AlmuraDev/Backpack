@@ -28,11 +28,15 @@ import com.almuradev.backpack.backend.DatabaseManager;
 import com.almuradev.backpack.backend.entity.Backpacks;
 import com.almuradev.backpack.inventory.BackpackChangeResult;
 import com.almuradev.backpack.inventory.BackpackInventory;
+import com.almuradev.backpack.util.Storage;
 import com.google.inject.Inject;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.inventory.Container;
 import net.minecraft.inventory.ContainerChest;
+import ninja.leaping.configurate.commented.CommentedConfigurationNode;
+import ninja.leaping.configurate.loader.ConfigurationLoader;
 import org.hibernate.Session;
+import org.slf4j.Logger;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.CommandResult;
@@ -41,11 +45,13 @@ import org.spongepowered.api.command.spec.CommandSpec;
 import org.spongepowered.api.config.DefaultConfig;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.event.Listener;
+import org.spongepowered.api.event.entity.DestructEntityEvent;
 import org.spongepowered.api.event.game.state.GamePreInitializationEvent;
 import org.spongepowered.api.event.item.inventory.InteractInventoryEvent;
 import org.spongepowered.api.event.network.ClientConnectionEvent;
 import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.plugin.Plugin;
+import org.spongepowered.api.plugin.PluginContainer;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.format.TextColors;
 
@@ -60,13 +66,20 @@ public class Backpack {
 
     public static final String PLUGIN_ID = "backpack", PLUGIN_NAME = "Backpack", PLUGIN_VERSION = "1.0";
     public static Backpack instance;
+    public Storage storage;
 
+    @Inject public Logger logger;
+    @Inject public PluginContainer container;
     @DefaultConfig(sharedRoot = false)
-    @Inject private File configDir;
+    @Inject private File configuration;
+    @DefaultConfig(sharedRoot = false)
+    @Inject private ConfigurationLoader<CommentedConfigurationNode> loader;
 
     @Listener
     public void onPreInitialization(GamePreInitializationEvent event) {
         instance = this;
+        storage = new Storage(container, configuration, loader);
+
         Sponge.getGame().getCommandManager().register(this, CommandSpec.builder()
                 .permission("backpack.command.open")
                 .description(Text.of("Opens your backpack"))
@@ -91,7 +104,7 @@ public class Backpack {
                             if (optBackpackInventory.isPresent()) {
                                 BackpackChangeResult result = DatabaseManager.upgrade(DatabaseManager.getSessionFactory().openSession(),
                                         optBackpackInventory.get());
-                                BackpackChangeResult.sendResultText(result, src, player);
+                                BackpackChangeResult.sendResultMessages(result, src, player);
                             }
                             return CommandResult.success();
                         })
@@ -106,7 +119,7 @@ public class Backpack {
                             if (optBackpackInventory.isPresent()) {
                                 BackpackChangeResult result = DatabaseManager.downgrade(DatabaseManager.getSessionFactory().openSession(),
                                         optBackpackInventory.get());
-                                BackpackChangeResult.sendResultText(result, src, player);
+                                BackpackChangeResult.sendResultMessages(result, src, player);
                             }
                             return CommandResult.success();
                         })
@@ -154,12 +167,28 @@ public class Backpack {
 
                 final Session session = DatabaseManager.getSessionFactory().openSession();
                 session.beginTransaction();
-                for (int i = 0; i < inventory.getSizeInventory(); i++) {
+                for (int i = 0; i < record.getSize(); i++) {
                     final ItemStack stack = (ItemStack) (Object) inventory.getStackInSlot(i);
                     DatabaseManager.saveSlot(session, record, i, stack == null ? null : stack.toContainer());
                 }
                 session.getTransaction().commit();
                 session.close();
+            }
+        }
+    }
+
+    @Listener
+    public void onDestructEntityEvent(DestructEntityEvent event) {
+        if (event.getTargetEntity() instanceof Player) {
+            final Player player = (Player) event.getTargetEntity();
+            if (!player.hasPermission("backpack." + player.getWorld().getName().toLowerCase() + ".death.keepOnDeath")) {
+                final Optional<BackpackInventory> optBackpack = BackpackFactory.get(player.getWorld(), player);
+                if (optBackpack.isPresent()) {
+                    for (int i = 0; i < optBackpack.get().getSizeInventory(); i++) {
+                        ((EntityPlayerMP) player).dropItem(optBackpack.get().getStackInSlot(i), true, true);
+                        optBackpack.get().setInventorySlotContents(i, null);
+                    }
+                }
             }
         }
     }
