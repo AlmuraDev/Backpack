@@ -42,6 +42,23 @@ public class BackpackInventory extends InventoryBasic {
         return record;
     }
 
+    public BackpackInventory clone() {
+        final BackpackInventory clone = new BackpackInventory(record);
+        for (int i = 0; i < this.getSizeInventory(); i++) {
+            clone.setInventorySlotContents(i, this.getStackInSlot(i));
+            clone.setCustomName(this.getName());
+        }
+        return clone;
+    }
+
+    public InventoryBasic getReadOnly() {
+        final InventoryBasic clone = new InventoryBasic(this.getName(), true, this.getSizeInventory());
+        for (int i = 0; i < this.getSizeInventory(); i++) {
+            clone.setInventorySlotContents(i, this.getStackInSlot(i));
+        }
+        return clone;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
