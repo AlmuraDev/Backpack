@@ -166,45 +166,46 @@ public class Backpack {
                             return CommandResult.success();
                         })
                         .build(), "view", "vw")
-                .child(CommandSpec.builder()
-                        .permission("backpack.command.blacklist")
-                        .description(Text.of("Displays the item ids blacklisted for backpacks in the world."))
-                        .arguments(optional(onlyOne(world(Text.of("world")))), optional(onlyOne(string(Text.of("player")))))
-                        .executor((src, args) -> {
-                            final Optional<WorldProperties> optProperties = args.getOne("world");
-                            final String worldName;
-                            if (optProperties.isPresent()) {
-                                worldName = optProperties.get().getWorldName();
-                            } else if (src instanceof Player) {
-                                worldName = ((Player) src).getWorld().getName();
-                            } else if (args.getOne("player").isPresent()) {
-                                final Optional<Player> player = Sponge.getServer().getPlayer(String.valueOf(args.getOne("player").get()));
-                                if (player.isPresent()) {
-                                    worldName = player.get().getWorld().getName();
-                                } else {
-                                    throw new CommandException(Text.of(TextColors.RED, "Player is either offline or name is incorrect."));
-                                }
-                            } else {
-                                throw new CommandException(Text.of(TextColors.RED, "You must specify a world or an online player."));
-                            }
-
-                            try {
-                                Text message = Text.of(TextStyles.BOLD, "Blacklist for ", TextColors.AQUA, worldName);
-                                for (String id : storage.getChildNode(String.format("worlds.%s.blacklist", worldName.toLowerCase()))
-                                        .getList(TypeToken.of(String.class))) {
-                                    message = message.toBuilder().append(Text.of("\n  • ", id)).build();
-                                }
-                                if (message.getChildren().size() > 2) {
-                                    src.sendMessages(message);
-                                } else {
-                                    src.sendMessage(Text.of("No blacklisted items found for ", TextColors.AQUA, worldName));
-                                }
-                            } catch (ObjectMappingException e) {
-                                logger.warn("Unable to get blacklist for " + worldName, e);
-                            }
-                            return CommandResult.success();
-                        })
-                        .build(), "blacklist", "bl")
+                // TODO Blacklist implementation
+//                .child(CommandSpec.builder()
+//                        .permission("backpack.command.blacklist")
+//                        .description(Text.of("Displays the item ids blacklisted for backpacks in the world."))
+//                        .arguments(optional(onlyOne(world(Text.of("world")))), optional(onlyOne(string(Text.of("player")))))
+//                        .executor((src, args) -> {
+//                            final Optional<WorldProperties> optProperties = args.getOne("world");
+//                            final String worldName;
+//                            if (optProperties.isPresent()) {
+//                                worldName = optProperties.get().getWorldName();
+//                            } else if (src instanceof Player) {
+//                                worldName = ((Player) src).getWorld().getName();
+//                            } else if (args.getOne("player").isPresent()) {
+//                                final Optional<Player> player = Sponge.getServer().getPlayer(String.valueOf(args.getOne("player").get()));
+//                                if (player.isPresent()) {
+//                                    worldName = player.get().getWorld().getName();
+//                                } else {
+//                                    throw new CommandException(Text.of(TextColors.RED, "Player is either offline or name is incorrect."));
+//                                }
+//                            } else {
+//                                throw new CommandException(Text.of(TextColors.RED, "You must specify a world or an online player."));
+//                            }
+//
+//                            try {
+//                                Text message = Text.of(TextStyles.BOLD, "Blacklist for ", TextColors.AQUA, worldName);
+//                                for (String id : storage.getChildNode(String.format("worlds.%s.blacklist", worldName.toLowerCase()))
+//                                        .getList(TypeToken.of(String.class))) {
+//                                    message = message.toBuilder().append(Text.of("\n  • ", id)).build();
+//                                }
+//                                if (message.getChildren().size() > 2) {
+//                                    src.sendMessages(message);
+//                                } else {
+//                                    src.sendMessage(Text.of("No blacklisted items found for ", TextColors.AQUA, worldName));
+//                                }
+//                            } catch (ObjectMappingException e) {
+//                                logger.warn("Unable to get blacklist for " + worldName, e);
+//                            }
+//                            return CommandResult.success();
+//                        })
+//                        .build(), "blacklist", "bl")
                 .child(CommandSpec.builder()
                         .permission("backpack.command.reload")
                         .description(Text.of("Reloads the configuration file."))
@@ -220,15 +221,16 @@ public class Backpack {
         DatabaseManager.init(Paths.get(".\\config\\backpack"), "backpacks");
     }
 
-    @Listener
-    public void onGameStartedServerEvent(GameStartedServerEvent event) {
-        for (World world : Sponge.getServer().getWorlds()) {
-            storage.registerDefaultNode(
-                    String.format("worlds.%s.blacklist", world.getName().toLowerCase()),
-                    Collections.EMPTY_LIST,
-                    "Blacklisted items must be a valid item ID (eg. minecraft:arrow)");
-        }
-    }
+    // TODO Blacklist implementation
+//    @Listener
+//    public void onGameStartedServerEvent(GameStartedServerEvent event) {
+//        for (World world : Sponge.getServer().getWorlds()) {
+//            storage.registerDefaultNode(
+//                    String.format("worlds.%s.blacklist", world.getName().toLowerCase()),
+//                    Collections.EMPTY_LIST,
+//                    "Blacklisted items must be a valid item ID (eg. minecraft:arrow)");
+//        }
+//    }
 
     @Listener
     public void onClientConnectionEventJoin(ClientConnectionEvent.Join event) throws IOException, SQLException {
