@@ -83,9 +83,9 @@ public class Storage {
         defaultNodes.stream().filter(entry -> entry.value != null).forEach(entry -> {
             final CommentedConfigurationNode node = getChildNode(entry.key);
             if (node.getValue() == null) {
-                if (entry.token.isPresent()) {
+                if (entry.type.isPresent()) {
                     try {
-                        getChildNode(entry.key).setValue((TypeToken) entry.token.get(), entry.value);
+                        getChildNode(entry.key).setValue(TypeToken.of((Class<Object>) entry.type.get()), entry.value);
                         getChildNode(entry.key).setComment(entry.comment);
                     } catch (ObjectMappingException e) {
                         logger.warn("Unable to map TypeToken!", e);
@@ -118,48 +118,24 @@ public class Storage {
     }
 
     /**
-     * Registers a default node. See {@link Storage#registerDefaultNode(String, Object, String)}.
-     * @param key The key to register.
-     * @param value The value to register.
-     */
-    public void registerDefaultNode(String key, Object value) {
-        this.registerDefaultNode(key, value, null);
-    }
-
-    /**
-     * Registers a default node without a {@link TypeToken}. See {@link Storage#registerDefaultNode(String, Object, String, Optional)}.
-     * @param key The key to register.
-     * @param value The value to register.
-     * @param comment The comment to register.
-     */
-    public void registerDefaultNode(String key, Object value, String comment) {
-        registerDefaultNode(key, value, comment, Optional.empty());
-    }
-
-    /**
      * Registers a default node. Calls {@link Storage#save()} and {@link Storage#load()}.
-     * @param key The path to register.
-     * <p>The key is split by a period for example "path.to.node" is the equivalent of...
-     * path {
-     *     to {
-     *         node=""
-     *     }
-     * }</p>
-     * @param value The value to register.
-     * @param comment The comment to register.
-     * @param token The optional {@link TypeToken} for the value being registered.
+     * @param node The {@link DefaultNode} to register.
      */
     @SuppressWarnings("unchecked")
-    public <T> void registerDefaultNode(String key, Object value, String comment, Optional<TypeToken<T>> token) {
-        final String[] nodes = key.split("\\.");
+    public void registerDefaultNode(DefaultNode node) {
+        final String[] nodes = node.key.split("\\.");
         final List<String> currentPath = Lists.newArrayList();
         for (int i = 0; i < nodes.length; i++) {
             if (i < nodes.length - 1) {
                 currentPath.add(i, nodes[i]);
                 final String joinedPath = Joiner.on(",").skipNulls().join(currentPath).replace(",", ".");
-                defaultNodes.add(new DefaultNode(joinedPath, null, null, token));
+                defaultNodes.add(new DefaultNode.Builder()
+                        .key(joinedPath)
+                        .type(node.type)
+                        .build()
+                );
             } else {
-                defaultNodes.add(new DefaultNode(key, value, comment, token));
+                defaultNodes.add(node);
             }
         }
         this.save();
@@ -175,12 +151,23 @@ public class Storage {
         return rootNode.getNode((Object[]) path.split("\\."));
     }
 
-    public Object getChildValue(String path) {
+    /**
+     * Gets the value of a child node as an object.
+     * @param path The path of the value to get.
+     * @return The object value.
+     */
+    public Object getChildNodeValue(String path) {
         return getChildNode(path).getValue();
     }
 
+    /**
+     * Gets the value of a child node as a generic type.
+     * @param path The path of the value to get.
+     * @param clazz The type of class to use.
+     * @return The value as the clazz.
+     */
     @SuppressWarnings("unchecked")
-    public <T> T getChildValue(String path, Class<T> clazz) {
+    public <T> T getChildNodeValue(String path, Class<T> clazz) {
         try {
             return getChildNode(path).getValue(TypeToken.of(clazz));
         } catch (ObjectMappingException e) {
@@ -190,18 +177,84 @@ public class Storage {
         return (T) getChildNode(path).getValue();
     }
 
+    @SuppressWarnings("unchecked")
     public static class DefaultNode<T> {
 
         public String key;
         public T value;
         public String comment;
-        public final Optional<TypeToken<T>> token;
+        public final Optional<Class<T>> type;
 
-        public DefaultNode(String key, T value, String comment, Optional<TypeToken<T>> token) {
+        public DefaultNode(String key, T value, String comment, Optional<Class<T>> type) {
             this.key = key;
             this.value = value;
             this.comment = comment;
-            this.token = token;
+            this.type = type;
+        }
+
+        public static <T> Builder<T> builder(Class<T> clazz) {
+            return new Builder<>();
+        }
+
+        public static class Builder<T> {
+            private String key = "";
+            private T value = null;
+            private String comment = "";
+            private Optional<Class<T>> type = Optional.empty();
+
+            /**
+             * Sets the path key for the {@link DefaultNode}.
+             * @param key The path to register.
+             * <p>The key is split by a period. For example "path.to.node" is the equivalent of...
+             * path {
+             *     to {
+             *         node=""
+             *     }
+             * }</p>
+             * @return The builder.
+             */
+            public Builder<T> key(String key) {
+                this.key = key;
+                return this;
+            }
+
+            /**
+             * Sets the value for the {@link DefaultNode}.
+             * @param value The value to register.
+             * @return The builder.
+             */
+            public Builder<T> value(T value) {
+                this.value = value;
+                return this;
+            }
+
+            /**
+             * Sets the comment for the {@link DefaultNode}.
+             * @param comment The comment to register.
+             * @return The builder.
+             */
+            public Builder<T> comment(String comment) {
+                this.comment = comment;
+                return this;
+            }
+
+            /**
+             * Sets the type for the {@link DefaultNode}.
+             * @param type The class to use for {@link TypeToken} mapping.
+             * @return The builder.
+             */
+            public Builder<T> type(Optional<Class<T>> type) {
+                this.type = type;
+                return this;
+            }
+
+            /**
+             * Build the {@link DefaultNode}.
+             * @return A new copy of {@link DefaultNode}.
+             */
+            public DefaultNode<T> build() {
+                return new DefaultNode<>(key, value, comment, type);
+            }
         }
     }
 }
