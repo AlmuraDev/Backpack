@@ -81,11 +81,11 @@ public class Backpack {
         instance = this;
         storage = new Storage(container, configuration, loader);
         storage.registerDefaultNode(Storage.DefaultNode.builder(TextTemplate.class)
-                .key("template.backpack.change.success")
+                .key("template.backpack.resize.success")
                 .value(TextTemplate.of(
                         TextTemplate.arg("target"),
                         " backpack was ",
-                        TextTemplate.arg("change"),
+                        TextTemplate.arg("resize"),
                         " from ", TextTemplate.arg("originalSize"),
                         " to ",
                         TextTemplate.arg("targetSize")))
@@ -93,21 +93,21 @@ public class Backpack {
                 .build()
         );
         storage.registerDefaultNode(Storage.DefaultNode.builder(TextTemplate.class)
-                .key("template.backpack.change.failure")
+                .key("template.backpack.resize.failure")
                 .value(TextTemplate.of(
                         "Unable to ",
-                        TextTemplate.arg("change"),
+                        TextTemplate.arg("resize"),
                         TextTemplate.arg("target"),
                         " backpack"))
                 .type(Optional.of(TextTemplate.class))
                 .build()
         );
         storage.registerDefaultNode(Storage.DefaultNode.builder(TextTemplate.class)
-                .key("template.backpack.change.limit")
+                .key("template.backpack.resize.limit")
                 .value(TextTemplate.of(
                         TextTemplate.arg("target"),
                         " backpack has already reached the ",
-                        TextTemplate.arg("change"),
+                        TextTemplate.arg("resize"),
                         " size"))
                 .type(Optional.of(TextTemplate.class))
                 .build()
