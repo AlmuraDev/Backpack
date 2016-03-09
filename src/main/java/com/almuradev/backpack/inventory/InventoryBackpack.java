@@ -29,11 +29,11 @@ import net.minecraft.inventory.InventoryBasic;
 
 import java.util.Objects;
 
-public class BackpackInventory extends InventoryBasic {
+public class InventoryBackpack extends InventoryBasic {
 
     private final Backpacks record;
 
-    public BackpackInventory(Backpacks record) {
+    public InventoryBackpack(Backpacks record) {
         super(record.getTitle(), true, record.getSize());
         this.record = record;
     }
@@ -42,8 +42,8 @@ public class BackpackInventory extends InventoryBasic {
         return record;
     }
 
-    public BackpackInventory clone() {
-        final BackpackInventory clone = new BackpackInventory(record);
+    public InventoryBackpack clone() {
+        final InventoryBackpack clone = new InventoryBackpack(record);
         for (int i = 0; i < this.getSizeInventory(); i++) {
             clone.setInventorySlotContents(i, this.getStackInSlot(i));
             clone.setCustomName(this.getName());
@@ -67,7 +67,7 @@ public class BackpackInventory extends InventoryBasic {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        final BackpackInventory inventory = (BackpackInventory) o;
+        final InventoryBackpack inventory = (InventoryBackpack) o;
         return Objects.equals(record, inventory.record);
     }
 

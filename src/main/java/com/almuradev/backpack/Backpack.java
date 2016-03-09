@@ -26,7 +26,7 @@ package com.almuradev.backpack;
 
 import com.almuradev.backpack.backend.DatabaseManager;
 import com.almuradev.backpack.backend.entity.Backpacks;
-import com.almuradev.backpack.inventory.BackpackInventory;
+import com.almuradev.backpack.inventory.InventoryBackpack;
 import com.almuradev.backpack.util.Storage;
 import com.google.inject.Inject;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -121,7 +121,7 @@ public class Backpack {
                 .executor((src, args) -> {
                     if (Sponge.getGame().getPlatform().getExecutionType().isServer()) {
                         final Player player = args.<Player>getOne("player").orElse(null);
-                        final Optional<BackpackInventory> optBackpackInventory = BackpackFactory.get(player.getWorld(), player);
+                        final Optional<InventoryBackpack> optBackpackInventory = BackpackFactory.get(player.getWorld(), player);
                         if (optBackpackInventory.isPresent()) {
                             optBackpackInventory.get().setCustomName("My Backpack");
                             ((EntityPlayerMP) player).displayGUIChest(optBackpackInventory.get());
@@ -135,7 +135,7 @@ public class Backpack {
                         .arguments(GenericArguments.playerOrSource(Text.of("player")))
                         .executor((src, args) -> {
                             final Player player = args.<Player>getOne("player").orElse(null);
-                            final Optional<BackpackInventory> optBackpackInventory = BackpackFactory.get(player.getWorld(), player);
+                            final Optional<InventoryBackpack> optBackpackInventory = BackpackFactory.get(player.getWorld(), player);
                             if (optBackpackInventory.isPresent()) {
                                 DatabaseManager.upgrade(DatabaseManager.getSessionFactory().openSession(), optBackpackInventory.get(), src, player);
                             }
@@ -148,7 +148,7 @@ public class Backpack {
                         .arguments(GenericArguments.playerOrSource(Text.of("player")))
                         .executor((src, args) -> {
                             final Player player = args.<Player>getOne("player").orElse(null);
-                            final Optional<BackpackInventory> optBackpackInventory = BackpackFactory.get(player.getWorld(), player);
+                            final Optional<InventoryBackpack> optBackpackInventory = BackpackFactory.get(player.getWorld(), player);
                             if (optBackpackInventory.isPresent()) {
                                 DatabaseManager.downgrade(DatabaseManager.getSessionFactory().openSession(), optBackpackInventory.get(), src, player);
                             }
@@ -169,7 +169,7 @@ public class Backpack {
                                 // TODO Handle User objects
                             } else {
                                 // TODO Possibly add system that prevents adding items to read-only backpacks
-                                final Optional<BackpackInventory> optBackpackInventory = BackpackFactory.get(player.getWorld(), player);
+                                final Optional<InventoryBackpack> optBackpackInventory = BackpackFactory.get(player.getWorld(), player);
                                 if (optBackpackInventory.isPresent()) {
                                     final boolean modifiable = !src.hasPermission("backpack.command.view.modify");
                                     final InventoryBasic inventory =
@@ -264,8 +264,8 @@ public class Backpack {
         if (container instanceof ContainerChest) {
             final ContainerChest containerChest = (ContainerChest) container;
 
-            if (containerChest.getLowerChestInventory() instanceof BackpackInventory) {
-                final BackpackInventory inventory = (BackpackInventory) containerChest.getLowerChestInventory();
+            if (containerChest.getLowerChestInventory() instanceof InventoryBackpack) {
+                final InventoryBackpack inventory = (InventoryBackpack) containerChest.getLowerChestInventory();
                 final Backpacks record = inventory.getRecord();
 
                 final Session session = DatabaseManager.getSessionFactory().openSession();
@@ -285,7 +285,7 @@ public class Backpack {
         if (event.getTargetEntity() instanceof Player) {
             final Player player = (Player) event.getTargetEntity();
             if (!player.hasPermission("backpack." + player.getWorld().getName().toLowerCase() + ".death.bypass")) {
-                final Optional<BackpackInventory> optBackpack = BackpackFactory.get(player.getWorld(), player);
+                final Optional<InventoryBackpack> optBackpack = BackpackFactory.get(player.getWorld(), player);
                 if (optBackpack.isPresent()) {
                     for (int i = 0; i < optBackpack.get().getSizeInventory(); i++) {
                         ((EntityPlayerMP) player).dropItem(optBackpack.get().getStackInSlot(i), true, true);

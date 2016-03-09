@@ -26,7 +26,7 @@ package com.almuradev.backpack;
 
 import com.almuradev.backpack.backend.DatabaseManager;
 import com.almuradev.backpack.backend.entity.Backpacks;
-import com.almuradev.backpack.inventory.BackpackInventory;
+import com.almuradev.backpack.inventory.InventoryBackpack;
 import com.google.common.collect.Sets;
 import org.hibernate.Criteria;
 import org.hibernate.Session;
@@ -42,9 +42,9 @@ import java.util.Set;
 
 public class BackpackFactory {
 
-    private static final Set<BackpackInventory> BACKPACKS = Sets.newConcurrentHashSet();
+    private static final Set<InventoryBackpack> BACKPACKS = Sets.newConcurrentHashSet();
 
-    public static BackpackInventory load(World world, Player player) throws IOException, SQLException {
+    public static InventoryBackpack load(World world, Player player) throws IOException, SQLException {
         final Session session = DatabaseManager.getSessionFactory().openSession();
         final Criteria criteria = session.createCriteria(Backpacks.class);
         Backpacks record = (Backpacks) criteria.add(Restrictions.and(Restrictions.eq("worldUniqueId", world.getUniqueId()), Restrictions.eq
@@ -60,17 +60,17 @@ public class BackpackFactory {
             session.saveOrUpdate(record);
             session.getTransaction().commit();
         }
-        final BackpackInventory inventory = new BackpackInventory(record);
+        final InventoryBackpack inventory = new InventoryBackpack(record);
         for (int i = 0; i < inventory.getSizeInventory(); i++) {
             DatabaseManager.loadSlot(session, inventory, i);
         }
         session.close();
         BACKPACKS.add(inventory);
-        return new BackpackInventory(record);
+        return new InventoryBackpack(record);
     }
 
-    public static Optional<BackpackInventory> get(World world, Player player) {
-        for (BackpackInventory inventory : BACKPACKS) {
+    public static Optional<InventoryBackpack> get(World world, Player player) {
+        for (InventoryBackpack inventory : BACKPACKS) {
             if (inventory.getRecord().getWorldUniqueId().equals(world.getUniqueId()) && inventory.getRecord().getPlayerUniqueId().equals(player
                     .getUniqueId())) {
                 return Optional.of(inventory);
@@ -80,8 +80,8 @@ public class BackpackFactory {
         return Optional.empty();
     }
 
-    public static void put(BackpackInventory inventory) {
-        final Iterator<BackpackInventory> iter = BACKPACKS.iterator();
+    public static void put(InventoryBackpack inventory) {
+        final Iterator<InventoryBackpack> iter = BACKPACKS.iterator();
         while (iter.hasNext()) {
             if (iter.next().equals(inventory)) {
                 iter.remove();

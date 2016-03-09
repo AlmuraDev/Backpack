@@ -28,7 +28,7 @@ import com.almuradev.backpack.Backpack;
 import com.almuradev.backpack.BackpackFactory;
 import com.almuradev.backpack.backend.entity.Backpacks;
 import com.almuradev.backpack.backend.entity.Slots;
-import com.almuradev.backpack.inventory.BackpackInventory;
+import com.almuradev.backpack.inventory.InventoryBackpack;
 import com.almuradev.backpack.inventory.Sizes;
 import com.google.common.collect.ImmutableMap;
 import ninja.leaping.configurate.hocon.HoconConfigurationLoader;
@@ -119,7 +119,7 @@ public class DatabaseManager {
         }
     }
 
-    public static void loadSlot(Session session, BackpackInventory inventory, int slotIndex) throws IOException, SQLException {
+    public static void loadSlot(Session session, InventoryBackpack inventory, int slotIndex) throws IOException, SQLException {
         Slots slotsRecord = (Slots) session.createCriteria(Slots.class).add(Restrictions.and(Restrictions.eq("backpacks", inventory.getRecord()),
                 Restrictions.eq("slot", slotIndex))).uniqueResult();
         if (slotsRecord == null) {
@@ -131,15 +131,15 @@ public class DatabaseManager {
         inventory.setInventorySlotContents(slotIndex, (net.minecraft.item.ItemStack) (Object) slotStack);
     }
 
-    public static boolean downgrade(Session session, BackpackInventory inventory, CommandSource src, Player player) {
+    public static boolean downgrade(Session session, InventoryBackpack inventory, CommandSource src, Player player) {
         return resize(session, inventory, false, src, player);
     }
 
-    public static boolean upgrade(Session session, BackpackInventory inventory, CommandSource src, Player player) {
+    public static boolean upgrade(Session session, InventoryBackpack inventory, CommandSource src, Player player) {
         return resize(session, inventory, true, src, player);
     }
 
-    private static boolean resize(Session session, BackpackInventory inventory, boolean upgrade, CommandSource src, Player player) {
+    private static boolean resize(Session session, InventoryBackpack inventory, boolean upgrade, CommandSource src, Player player) {
         final int originalSize = inventory.getRecord().getSize();
         final int targetSize = originalSize + (upgrade ? 9 : -9);
         if (targetSize < getLimitSize(src, false) || targetSize > getLimitSize(src, true)) {
@@ -160,7 +160,7 @@ public class DatabaseManager {
             session.saveOrUpdate(record);
             session.getTransaction().commit();
 
-            final BackpackInventory resized = new BackpackInventory(record);
+            final InventoryBackpack resized = new InventoryBackpack(record);
             for (int i = 0; i < record.getSize(); i++) {
                 resized.setInventorySlotContents(i, inventory.getStackInSlot(i));
             }
