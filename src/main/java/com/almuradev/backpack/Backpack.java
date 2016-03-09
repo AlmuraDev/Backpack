@@ -65,7 +65,7 @@ import java.util.Optional;
 @Plugin(id = Backpack.PLUGIN_ID, name = Backpack.PLUGIN_NAME, version = Backpack.PLUGIN_VERSION)
 public class Backpack {
 
-    public static final String PLUGIN_ID = "backpack", PLUGIN_NAME = "Backpack", PLUGIN_VERSION = "1.0";
+    public static final String PLUGIN_ID = "com.almuradev.backpack", PLUGIN_NAME = "Backpack", PLUGIN_VERSION = "1.0";
     public static Backpack instance;
     public Storage storage;
 
