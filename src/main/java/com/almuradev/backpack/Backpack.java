@@ -24,17 +24,10 @@
  */
 package com.almuradev.backpack;
 
-import static org.spongepowered.api.command.args.GenericArguments.onlyOne;
-import static org.spongepowered.api.command.args.GenericArguments.optional;
-import static org.spongepowered.api.command.args.GenericArguments.string;
-import static org.spongepowered.api.command.args.GenericArguments.world;
-
 import com.almuradev.backpack.backend.DatabaseManager;
 import com.almuradev.backpack.backend.entity.Backpacks;
-import com.almuradev.backpack.inventory.BackpackChangeResult;
 import com.almuradev.backpack.inventory.BackpackInventory;
 import com.almuradev.backpack.util.Storage;
-import com.google.common.reflect.TypeToken;
 import com.google.inject.Inject;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.inventory.Container;
@@ -42,7 +35,6 @@ import net.minecraft.inventory.ContainerChest;
 import net.minecraft.inventory.InventoryBasic;
 import ninja.leaping.configurate.commented.CommentedConfigurationNode;
 import ninja.leaping.configurate.loader.ConfigurationLoader;
-import ninja.leaping.configurate.objectmapping.ObjectMappingException;
 import org.hibernate.Session;
 import org.slf4j.Logger;
 import org.spongepowered.api.Sponge;
@@ -55,23 +47,19 @@ import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.entity.DestructEntityEvent;
 import org.spongepowered.api.event.game.state.GamePreInitializationEvent;
-import org.spongepowered.api.event.game.state.GameStartedServerEvent;
 import org.spongepowered.api.event.item.inventory.InteractInventoryEvent;
 import org.spongepowered.api.event.network.ClientConnectionEvent;
 import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.plugin.Plugin;
 import org.spongepowered.api.plugin.PluginContainer;
 import org.spongepowered.api.text.Text;
+import org.spongepowered.api.text.TextTemplate;
 import org.spongepowered.api.text.format.TextColors;
-import org.spongepowered.api.text.format.TextStyles;
-import org.spongepowered.api.world.World;
-import org.spongepowered.api.world.storage.WorldProperties;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.sql.SQLException;
-import java.util.Collections;
 import java.util.Optional;
 
 @Plugin(id = Backpack.PLUGIN_ID, name = Backpack.PLUGIN_NAME, version = Backpack.PLUGIN_VERSION)
@@ -92,6 +80,39 @@ public class Backpack {
     public void onGamePreInitializationEvent(GamePreInitializationEvent event) {
         instance = this;
         storage = new Storage(container, configuration, loader);
+        storage.registerDefaultNode(Storage.DefaultNode.builder(TextTemplate.class)
+                .key("template.backpack.change.success")
+                .value(TextTemplate.of(
+                        TextTemplate.arg("target"),
+                        " backpack was ",
+                        TextTemplate.arg("change"),
+                        " from ", TextTemplate.arg("originalSize"),
+                        " to ",
+                        TextTemplate.arg("targetSize")))
+                .type(Optional.of(TextTemplate.class))
+                .build()
+        );
+        storage.registerDefaultNode(Storage.DefaultNode.builder(TextTemplate.class)
+                .key("template.backpack.change.failure")
+                .value(TextTemplate.of(
+                        "Unable to ",
+                        TextTemplate.arg("change"),
+                        TextTemplate.arg("target"),
+                        " backpack"))
+                .type(Optional.of(TextTemplate.class))
+                .build()
+        );
+        storage.registerDefaultNode(Storage.DefaultNode.builder(TextTemplate.class)
+                .key("template.backpack.change.limit")
+                .value(TextTemplate.of(
+                        TextTemplate.arg("target"),
+                        " backpack has already reached the ",
+                        TextTemplate.arg("change"),
+                        " size"))
+                .type(Optional.of(TextTemplate.class))
+                .build()
+        );
+
 
         Sponge.getGame().getCommandManager().register(this, CommandSpec.builder()
                 .permission("backpack.command.open")
@@ -116,9 +137,7 @@ public class Backpack {
                             final Player player = args.<Player>getOne("player").orElse(null);
                             final Optional<BackpackInventory> optBackpackInventory = BackpackFactory.get(player.getWorld(), player);
                             if (optBackpackInventory.isPresent()) {
-                                BackpackChangeResult result = DatabaseManager.upgrade(DatabaseManager.getSessionFactory().openSession(),
-                                        optBackpackInventory.get());
-                                BackpackChangeResult.sendResultMessages(result, src, player);
+                                DatabaseManager.upgrade(DatabaseManager.getSessionFactory().openSession(), optBackpackInventory.get(), src, player);
                             }
                             return CommandResult.success();
                         })
@@ -131,9 +150,7 @@ public class Backpack {
                             final Player player = args.<Player>getOne("player").orElse(null);
                             final Optional<BackpackInventory> optBackpackInventory = BackpackFactory.get(player.getWorld(), player);
                             if (optBackpackInventory.isPresent()) {
-                                BackpackChangeResult result = DatabaseManager.downgrade(DatabaseManager.getSessionFactory().openSession(),
-                                        optBackpackInventory.get());
-                                BackpackChangeResult.sendResultMessages(result, src, player);
+                                DatabaseManager.downgrade(DatabaseManager.getSessionFactory().openSession(), optBackpackInventory.get(), src, player);
                             }
                             return CommandResult.success();
                         })
@@ -167,45 +184,48 @@ public class Backpack {
                         })
                         .build(), "view", "vw")
                 // TODO Blacklist implementation
-//                .child(CommandSpec.builder()
-//                        .permission("backpack.command.blacklist")
-//                        .description(Text.of("Displays the item ids blacklisted for backpacks in the world."))
-//                        .arguments(optional(onlyOne(world(Text.of("world")))), optional(onlyOne(string(Text.of("player")))))
-//                        .executor((src, args) -> {
-//                            final Optional<WorldProperties> optProperties = args.getOne("world");
-//                            final String worldName;
-//                            if (optProperties.isPresent()) {
-//                                worldName = optProperties.get().getWorldName();
-//                            } else if (src instanceof Player) {
-//                                worldName = ((Player) src).getWorld().getName();
-//                            } else if (args.getOne("player").isPresent()) {
-//                                final Optional<Player> player = Sponge.getServer().getPlayer(String.valueOf(args.getOne("player").get()));
-//                                if (player.isPresent()) {
-//                                    worldName = player.get().getWorld().getName();
-//                                } else {
-//                                    throw new CommandException(Text.of(TextColors.RED, "Player is either offline or name is incorrect."));
-//                                }
-//                            } else {
-//                                throw new CommandException(Text.of(TextColors.RED, "You must specify a world or an online player."));
-//                            }
-//
-//                            try {
-//                                Text message = Text.of(TextStyles.BOLD, "Blacklist for ", TextColors.AQUA, worldName);
-//                                for (String id : storage.getChildNode(String.format("worlds.%s.blacklist", worldName.toLowerCase()))
-//                                        .getList(TypeToken.of(String.class))) {
-//                                    message = message.toBuilder().append(Text.of("\n  • ", id)).build();
-//                                }
-//                                if (message.getChildren().size() > 2) {
-//                                    src.sendMessages(message);
-//                                } else {
-//                                    src.sendMessage(Text.of("No blacklisted items found for ", TextColors.AQUA, worldName));
-//                                }
-//                            } catch (ObjectMappingException e) {
-//                                logger.warn("Unable to get blacklist for " + worldName, e);
-//                            }
-//                            return CommandResult.success();
-//                        })
-//                        .build(), "blacklist", "bl")
+                //                .child(CommandSpec.builder()
+                //                        .permission("backpack.command.blacklist")
+                //                        .description(Text.of("Displays the item ids blacklisted for backpacks in the world."))
+                //                        .arguments(optional(onlyOne(world(Text.of("world")))), optional(onlyOne(string(Text.of("player")))))
+                //                        .executor((src, args) -> {
+                //                            final Optional<WorldProperties> optProperties = args.getOne("world");
+                //                            final String worldName;
+                //                            if (optProperties.isPresent()) {
+                //                                worldName = optProperties.get().getWorldName();
+                //                            } else if (src instanceof Player) {
+                //                                worldName = ((Player) src).getWorld().getName();
+                //                            } else if (args.getOne("player").isPresent()) {
+                //                                final Optional<Player> player = Sponge.getServer().getPlayer(String.valueOf(args.getOne("player")
+                // .get()));
+                //                                if (player.isPresent()) {
+                //                                    worldName = player.get().getWorld().getName();
+                //                                } else {
+                //                                    throw new CommandException(Text.of(TextColors.RED, "Player is either offline or name is
+                // incorrect."));
+                //                                }
+                //                            } else {
+                //                                throw new CommandException(Text.of(TextColors.RED, "You must specify a world or an online player
+                // ."));
+                //                            }
+                //
+                //                            try {
+                //                                Text message = Text.of(TextStyles.BOLD, "Blacklist for ", TextColors.AQUA, worldName);
+                //                                for (String id : storage.getChildNode(String.format("worlds.%s.blacklist", worldName.toLowerCase()))
+                //                                        .getList(TypeToken.of(String.class))) {
+                //                                    message = message.toBuilder().append(Text.of("\n  • ", id)).build();
+                //                                }
+                //                                if (message.getChildren().size() > 2) {
+                //                                    src.sendMessages(message);
+                //                                } else {
+                //                                    src.sendMessage(Text.of("No blacklisted items found for ", TextColors.AQUA, worldName));
+                //                                }
+                //                            } catch (ObjectMappingException e) {
+                //                                logger.warn("Unable to get blacklist for " + worldName, e);
+                //                            }
+                //                            return CommandResult.success();
+                //                        })
+                //                        .build(), "blacklist", "bl")
                 .child(CommandSpec.builder()
                         .permission("backpack.command.reload")
                         .description(Text.of("Reloads the configuration file."))
@@ -222,15 +242,15 @@ public class Backpack {
     }
 
     // TODO Blacklist implementation
-//    @Listener
-//    public void onGameStartedServerEvent(GameStartedServerEvent event) {
-//        for (World world : Sponge.getServer().getWorlds()) {
-//            storage.registerDefaultNode(
-//                    String.format("worlds.%s.blacklist", world.getName().toLowerCase()),
-//                    Collections.EMPTY_LIST,
-//                    "Blacklisted items must be a valid item ID (eg. minecraft:arrow)");
-//        }
-//    }
+    //    @Listener
+    //    public void onGameStartedServerEvent(GameStartedServerEvent event) {
+    //        for (World world : Sponge.getServer().getWorlds()) {
+    //            storage.registerDefaultNode(
+    //                    String.format("worlds.%s.blacklist", world.getName().toLowerCase()),
+    //                    Collections.EMPTY_LIST,
+    //                    "Blacklisted items must be a valid item ID (eg. minecraft:arrow)");
+    //        }
+    //    }
 
     @Listener
     public void onClientConnectionEventJoin(ClientConnectionEvent.Join event) throws IOException, SQLException {

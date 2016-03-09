@@ -197,6 +197,7 @@ public class Storage {
         }
 
         public static class Builder<T> {
+
             private String key = "";
             private T value = null;
             private String comment = "";

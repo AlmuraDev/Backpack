@@ -24,21 +24,27 @@
  */
 package com.almuradev.backpack.backend;
 
+import com.almuradev.backpack.Backpack;
 import com.almuradev.backpack.BackpackFactory;
 import com.almuradev.backpack.backend.entity.Backpacks;
 import com.almuradev.backpack.backend.entity.Slots;
-import com.almuradev.backpack.inventory.BackpackChangeResult;
 import com.almuradev.backpack.inventory.BackpackInventory;
+import com.google.common.collect.ImmutableMap;
 import ninja.leaping.configurate.hocon.HoconConfigurationLoader;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.cfg.Configuration;
 import org.hibernate.criterion.Restrictions;
+import org.spongepowered.api.command.CommandSource;
 import org.spongepowered.api.data.DataContainer;
 import org.spongepowered.api.data.DataView;
 import org.spongepowered.api.data.translator.ConfigurateTranslator;
+import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.item.inventory.ItemStack;
+import org.spongepowered.api.text.Text;
+import org.spongepowered.api.text.TextTemplate;
+import org.spongepowered.api.text.format.TextColors;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -123,20 +129,26 @@ public class DatabaseManager {
         inventory.setInventorySlotContents(slotIndex, (net.minecraft.item.ItemStack) (Object) slotStack);
     }
 
-    public static BackpackChangeResult upgrade(Session session, BackpackInventory inventory) {
-        return change(session, inventory, 9);
+    public static boolean downgrade(Session session, BackpackInventory inventory, CommandSource src, Player player) {
+        return change(session, inventory, false, src, player);
     }
 
-    public static BackpackChangeResult downgrade(Session session, BackpackInventory inventory) {
-        return change(session, inventory, -9);
+    public static boolean upgrade(Session session, BackpackInventory inventory, CommandSource src, Player player) {
+        return change(session, inventory, true, src, player);
     }
 
-    private static BackpackChangeResult change(Session session, BackpackInventory inventory, int value) {
+    private static boolean change(Session session, BackpackInventory inventory, boolean upgrade, CommandSource src, Player player) {
         final int originalSize = inventory.getRecord().getSize();
-        final int targetSize = originalSize + value;
+        final int targetSize = originalSize + (upgrade ? 9 : -9);
         if (targetSize < 9 || targetSize > 54) {
             session.close();
-            return new BackpackChangeResult.LimitReached(targetSize, originalSize);
+            final String node = "template.backpack.change.limit";
+            final TextTemplate template = Backpack.instance.storage.getChildNodeValue(node, TextTemplate.class);
+            src.sendMessage(template, ImmutableMap.of(
+                    "target", src == player ? Text.of("Your") : Text.of(TextColors.LIGHT_PURPLE, player.getName(), TextColors.RESET, "'s"),
+                    "change", Text.of(upgrade ? "maximum" : "minimum")
+            ));
+            return false;
         }
         final Backpacks record = (Backpacks) session.createCriteria(Backpacks.class).add(Restrictions.eq("backpackId", inventory.getRecord()
                 .getBackpackId())).uniqueResult();
@@ -153,10 +165,28 @@ public class DatabaseManager {
 
             BackpackFactory.put(changed);
             session.close();
-            return new BackpackChangeResult.Success(originalSize, targetSize);
+            if (src != player) {
+                src.sendMessage(Backpack.instance.storage.getChildNodeValue("template.backpack.change.success", TextTemplate.class), ImmutableMap.of(
+                        "target", Text.of(TextColors.LIGHT_PURPLE, player.getName(), TextColors.RESET, "'s"),
+                        "change", upgrade ? Text.of(TextColors.GREEN, "upgraded") : Text.of(TextColors.RED, "downgraded"),
+                        "originalSize", Text.of(originalSize),
+                        "targetSize", Text.of(targetSize)
+                ));
+            }
+            player.sendMessage(Backpack.instance.storage.getChildNodeValue("template.backpack.change.success", TextTemplate.class), ImmutableMap.of(
+                    "target", Text.of("Your"),
+                    "change", upgrade ? Text.of(TextColors.GREEN, "upgraded") : Text.of(TextColors.RED, "downgraded"),
+                    "originalSize", Text.of(originalSize),
+                    "targetSize", Text.of(targetSize)
+            ));
+            return true;
         }
         session.close();
-        return new BackpackChangeResult.Failure(targetSize, originalSize);
+        src.sendMessage(Backpack.instance.storage.getChildNodeValue("template.backpack.change.failure", TextTemplate.class), ImmutableMap.of(
+                "change", upgrade ? Text.of(TextColors.GREEN, "upgrade") : Text.of(TextColors.RED, "downgrade"),
+                "target", src == player ? Text.of("Your") : Text.of(TextColors.LIGHT_PURPLE, player.getName(), TextColors.RESET, "'s")
+        ));
+        return false;
     }
 
     private static String clobToString(java.sql.Clob data) throws SQLException, IOException {
