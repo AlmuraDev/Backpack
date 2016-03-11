@@ -25,8 +25,7 @@
 package com.almuradev.backpack;
 
 import com.almuradev.backpack.database.DatabaseManager;
-import com.almuradev.backpack.database.entity.Backpacks;
-import com.almuradev.backpack.inventory.InventoryBackpack;
+import com.almuradev.backpack.database.entity.Blacklists;
 import com.almuradev.backpack.inventory.InventoryBlacklist;
 import com.google.common.collect.Sets;
 import org.hibernate.Criteria;
@@ -40,55 +39,51 @@ import java.util.Iterator;
 import java.util.Optional;
 import java.util.Set;
 
-public class BackpackFactory {
+public class BlacklistFactory {
 
-    private static final Set<InventoryBackpack> BACKPACKS = Sets.newConcurrentHashSet();
     private static final Set<InventoryBlacklist> BLACKLISTS = Sets.newConcurrentHashSet();
 
-    public static InventoryBackpack load(World world, Player player) throws IOException {
+    public static InventoryBlacklist load(World world) throws IOException {
         final Session session = DatabaseManager.getSessionFactory().openSession();
-        final Criteria criteria = session.createCriteria(Backpacks.class);
-        Backpacks record = (Backpacks) criteria.add(Restrictions.and(Restrictions.eq("worldUniqueId", world.getUniqueId()), Restrictions.eq
-                ("playerUniqueId", player.getUniqueId()))).uniqueResult();
+        final Criteria criteria = session.createCriteria(Blacklists.class);
+        Blacklists record = (Blacklists) criteria.add(Restrictions.and(Restrictions.eq("worldUniqueId", world.getUniqueId()))).uniqueResult();
 
         if (record == null) {
-            record = new Backpacks();
+            record = new Blacklists();
             record.setWorldUniqueId(world.getUniqueId());
-            record.setPlayerUniqueId(player.getUniqueId());
-            // TODO Default size
-            record.setSize(9);
-            record.setTitle("My Backpack");
+            record.setTitle("[" + world.getName() + "] Blacklist #" + record.getPageId());
             session.beginTransaction();
             session.saveOrUpdate(record);
             session.getTransaction().commit();
         }
 
-        final InventoryBackpack inventory = new InventoryBackpack(record);
+        final InventoryBlacklist inventory = new InventoryBlacklist(record);
         for (int i = 0; i < inventory.getSizeInventory(); i++) {
             DatabaseManager.loadSlot(session, inventory, i);
         }
         session.close();
-        BACKPACKS.add(inventory);
-        return new InventoryBackpack(record);
+        BLACKLISTS.add(inventory);
+        return new InventoryBlacklist(record);
     }
 
-    public static Optional<InventoryBackpack> get(World world, Player player) {
-        for (InventoryBackpack inventory : BACKPACKS) {
-            if (inventory.getRecord().getWorldUniqueId().equals(world.getUniqueId()) && inventory.getRecord().getPlayerUniqueId().equals(player
-                    .getUniqueId())) {
+    public static Optional<InventoryBlacklist> get(World world, Player player) {
+        for (InventoryBlacklist inventory : BLACKLISTS) {
+            if (world == null && inventory.getRecord().getWorldUniqueId() == null) {
+                return Optional.of(inventory);
+            } else if (world != null && inventory.getRecord().getWorldUniqueId().equals(world.getUniqueId())) {
                 return Optional.of(inventory);
             }
         }
         return Optional.empty();
     }
 
-    public static void put(InventoryBackpack inventory) {
-        final Iterator<InventoryBackpack> iter = BACKPACKS.iterator();
+    public static void put(InventoryBlacklist inventory) {
+        final Iterator<InventoryBlacklist> iter = BLACKLISTS.iterator();
         while (iter.hasNext()) {
             if (iter.next().equals(inventory)) {
                 iter.remove();
             }
         }
-        BACKPACKS.add(inventory);
+        BLACKLISTS.add(inventory);
     }
 }

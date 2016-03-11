@@ -22,36 +22,15 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.almuradev.backpack.inventory;
+package com.almuradev.backpack.api.inventory;
 
-public enum Sizes {
-    TINY(9),
-    SMALL(18),
-    MEDIUM(27),
-    LARGE(36),
-    HUGE(45),
-    GIGANTIC(54);
+import com.almuradev.backpack.api.database.entity.InventoryEntity;
 
-    public final int value;
+public interface IInventoryDatabase {
 
-    Sizes(int value) {
-        this.value = value;
-    }
+    InventoryEntity getRecord();
 
-    public static Sizes get(int size) {
-        switch (size) {
-            case 18:
-                return SMALL;
-            case 27:
-                return MEDIUM;
-            case 36:
-                return LARGE;
-            case 45:
-                return HUGE;
-            case 54:
-                return GIGANTIC;
-            default:
-                return TINY;
-        }
-    }
+    boolean isModifiable();
+
+    void setModifiable(boolean modifiable);
 }

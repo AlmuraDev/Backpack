@@ -22,10 +22,13 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.almuradev.backpack.backend.entity;
+package com.almuradev.backpack.database.entity;
 
+import com.almuradev.backpack.api.database.entity.InventoryEntity;
+import com.almuradev.backpack.api.database.entity.SlotsEntity;
 import com.google.common.collect.Sets;
 
+import java.sql.Clob;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
@@ -35,13 +38,15 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
 @Entity
 @Table(name = "bp_backpacks", uniqueConstraints = {@UniqueConstraint(columnNames = {"backpackId", "world_unique_id", "player_unique_id"})})
-public class Backpacks {
+public class Backpacks implements InventoryEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -50,7 +55,7 @@ public class Backpacks {
     @Column(nullable = false, name = "world_unique_id")
     private UUID worldUniqueId;
 
-    @Column(unique = true, nullable = false, name = "player_unique_id")
+    @Column(nullable = true, name = "player_unique_id")
     private UUID playerUniqueId;
 
     @Column(nullable = false, name = "title")
@@ -66,20 +71,20 @@ public class Backpacks {
         return backpackId;
     }
 
-    public UUID getPlayerUniqueId() {
-        return playerUniqueId;
-    }
-
-    public void setPlayerUniqueId(UUID playerUniqueId) {
-        this.playerUniqueId = playerUniqueId;
-    }
-
     public UUID getWorldUniqueId() {
         return worldUniqueId;
     }
 
     public void setWorldUniqueId(UUID worldUniqueId) {
         this.worldUniqueId = worldUniqueId;
+    }
+
+    public UUID getPlayerUniqueId() {
+        return playerUniqueId;
+    }
+
+    public void setPlayerUniqueId(UUID playerUniqueId) {
+        this.playerUniqueId = playerUniqueId;
     }
 
     public String getTitle() {
@@ -122,5 +127,54 @@ public class Backpacks {
     @Override
     public int hashCode() {
         return Objects.hash(worldUniqueId, playerUniqueId);
+    }
+
+    @Entity
+    @Table(name = "bp_backpacks_slots", uniqueConstraints = {@UniqueConstraint(columnNames = {"slotId"})})
+    public static class Slots implements SlotsEntity {
+
+        @Id
+        @GeneratedValue(strategy = GenerationType.IDENTITY)
+        long slotId;
+
+        @ManyToOne(targetEntity = Backpacks.class)
+        @JoinColumn(name = "backpackId")
+        private Backpacks backpacks;
+
+        @Column(nullable = false, name = "slotIndex")
+        private int slot;
+
+        @Column(nullable = false, name = "data")
+        private Clob data;
+
+        public long getId() {
+            return slotId;
+        }
+
+        public Backpacks getInventories() {
+            return backpacks;
+        }
+
+        public void setInventories(InventoryEntity backpacks) {
+            if (backpacks instanceof Backpacks) {
+                this.backpacks = (Backpacks) backpacks;
+            }
+        }
+
+        public int getSlot() {
+            return slot;
+        }
+
+        public void setSlot(int slot) {
+            this.slot = slot;
+        }
+
+        public Clob getData() {
+            return data;
+        }
+
+        public void setData(Clob data) {
+            this.data = data;
+        }
     }
 }

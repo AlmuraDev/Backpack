@@ -24,16 +24,15 @@
  */
 package com.almuradev.backpack;
 
-import com.almuradev.backpack.api.event.BackpackEvent;
-import com.almuradev.backpack.backend.DatabaseManager;
-import com.almuradev.backpack.backend.entity.Backpacks;
+import com.almuradev.backpack.database.DatabaseManager;
+import com.almuradev.backpack.database.entity.Backpacks;
 import com.almuradev.backpack.inventory.InventoryBackpack;
+import com.almuradev.backpack.inventory.InventoryBlacklist;
 import com.almuradev.backpack.util.Storage;
 import com.google.inject.Inject;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.inventory.Container;
 import net.minecraft.inventory.ContainerChest;
-import net.minecraft.inventory.InventoryBasic;
 import ninja.leaping.configurate.commented.CommentedConfigurationNode;
 import ninja.leaping.configurate.loader.ConfigurationLoader;
 import org.hibernate.Session;
@@ -139,7 +138,7 @@ public class Backpack {
                             final Player player = args.<Player>getOne("player").orElse(null);
                             final Optional<InventoryBackpack> optBackpackInventory = BackpackFactory.get(player.getWorld(), player);
                             if (optBackpackInventory.isPresent()) {
-                                DatabaseManager.upgrade(DatabaseManager.getSessionFactory().openSession(), optBackpackInventory.get(), src, player);
+                                optBackpackInventory.get().upgrade(DatabaseManager.getSessionFactory().openSession(), src, player);
                             }
                             return CommandResult.success();
                         })
@@ -152,7 +151,7 @@ public class Backpack {
                             final Player player = args.<Player>getOne("player").orElse(null);
                             final Optional<InventoryBackpack> optBackpackInventory = BackpackFactory.get(player.getWorld(), player);
                             if (optBackpackInventory.isPresent()) {
-                                DatabaseManager.downgrade(DatabaseManager.getSessionFactory().openSession(), optBackpackInventory.get(), src, player);
+                                optBackpackInventory.get().downgrade(DatabaseManager.getSessionFactory().openSession(), src, player);
                             }
                             return CommandResult.success();
                         })
@@ -170,12 +169,11 @@ public class Backpack {
                             if (player == null) {
                                 // TODO Handle User objects
                             } else {
-                                // TODO Possibly add system that prevents adding items to read-only backpacks
                                 final Optional<InventoryBackpack> optBackpackInventory = BackpackFactory.get(player.getWorld(), player);
                                 if (optBackpackInventory.isPresent()) {
-                                    final boolean modifiable = !src.hasPermission("backpack.command.view.modify");
-                                    final InventoryBasic inventory =
-                                            modifiable ? optBackpackInventory.get() : optBackpackInventory.get().getReadOnly();
+                                    final boolean modifiable = src.hasPermission("backpack.command.view.modify");
+                                    final InventoryBackpack inventory = new InventoryBackpack(optBackpackInventory.get().getRecord());
+                                    inventory.setModifiable(modifiable);
                                     inventory.setCustomName(player.getName() + "'s Backpack");
                                     src.sendMessage(Text.of(String
                                             .format("Opening %s's backpack in %s mode.", player.getName(), modifiable ? "live" : "read-only")));
@@ -185,49 +183,36 @@ public class Backpack {
                             return CommandResult.success();
                         })
                         .build(), "view", "vw")
-                // TODO Blacklist implementation
                 //                .child(CommandSpec.builder()
                 //                        .permission("backpack.command.blacklist")
-                //                        .description(Text.of("Displays the item ids blacklisted for backpacks in the world."))
-                //                        .arguments(optional(onlyOne(world(Text.of("world")))), optional(onlyOne(string(Text.of("player")))))
+                //                        .description(Text.of("Lets you view the blacklist"))
+                //                        .arguments(GenericArguments.string(Text.of("player")))
                 //                        .executor((src, args) -> {
-                //                            final Optional<WorldProperties> optProperties = args.getOne("world");
-                //                            final String worldName;
-                //                            if (optProperties.isPresent()) {
-                //                                worldName = optProperties.get().getWorldName();
-                //                            } else if (src instanceof Player) {
-                //                                worldName = ((Player) src).getWorld().getName();
-                //                            } else if (args.getOne("player").isPresent()) {
-                //                                final Optional<Player> player = Sponge.getServer().getPlayer(String.valueOf(args.getOne("player")
-                // .get()));
-                //                                if (player.isPresent()) {
-                //                                    worldName = player.get().getWorld().getName();
-                //                                } else {
-                //                                    throw new CommandException(Text.of(TextColors.RED, "Player is either offline or name is
-                // incorrect."));
-                //                                }
-                //                            } else {
-                //                                throw new CommandException(Text.of(TextColors.RED, "You must specify a world or an online player
-                // ."));
+                //                            if (!(src instanceof Player)) {
+                //                                throw new CommandException(Text.of(TextColors.RED, "Must be in-game to view the blacklist!"));
                 //                            }
-                //
-                //                            try {
-                //                                Text message = Text.of(TextStyles.BOLD, "Blacklist for ", TextColors.AQUA, worldName);
-                //                                for (String id : storage.getChildNode(String.format("worlds.%s.blacklist", worldName.toLowerCase()))
-                //                                        .getList(TypeToken.of(String.class))) {
-                //                                    message = message.toBuilder().append(Text.of("\n  • ", id)).build();
+                //                            final String playerOrUser = args.<String>getOne("player").orElse(null);
+                //                            final Player player = Sponge.getServer().getPlayer(playerOrUser).orElse(null);
+                //                            if (player == null) {
+                //                                // TODO Handle User objects
+                //                            } else {
+                //                                // TODO Possibly add system that prevents adding items to read-only backpacks
+                //                                final Optional<InventoryBackpack> optBackpackInventory = BackpackFactory.get(player.getWorld(),
+                // player);
+                //                                if (optBackpackInventory.isPresent()) {
+                //                                    final boolean modifiable = !src.hasPermission("backpack.command.view.modify");
+                //                                    final InventoryBasic inventory =
+                //                                            modifiable ? optBackpackInventory.get() : optBackpackInventory.get().getReadOnly();
+                //                                    inventory.setCustomName(player.getName() + "'s Backpack");
+                //                                    src.sendMessage(Text.of(String
+                //                                            .format("Opening %s's backpack in %s mode.", player.getName(), modifiable ? "live" :
+                // "read-only")));
+                //                                    ((EntityPlayerMP) src).displayGUIChest(inventory);
                 //                                }
-                //                                if (message.getChildren().size() > 2) {
-                //                                    src.sendMessages(message);
-                //                                } else {
-                //                                    src.sendMessage(Text.of("No blacklisted items found for ", TextColors.AQUA, worldName));
-                //                                }
-                //                            } catch (ObjectMappingException e) {
-                //                                logger.warn("Unable to get blacklist for " + worldName, e);
                 //                            }
                 //                            return CommandResult.success();
                 //                        })
-                //                        .build(), "blacklist", "bl")
+                //                        .build(), "view", "vw")
                 .child(CommandSpec.builder()
                         .permission("backpack.command.reload")
                         .description(Text.of("Reloads the configuration file."))
@@ -243,16 +228,9 @@ public class Backpack {
         DatabaseManager.init(Paths.get(".\\" + Backpack.instance.configuration.getParent()), "backpacks");
     }
 
-    // TODO Blacklist implementation
-    //    @Listener
-    //    public void onGameStartedServerEvent(GameStartedServerEvent event) {
-    //        for (World world : Sponge.getServer().getWorlds()) {
-    //            storage.registerDefaultNode(
-    //                    String.format("worlds.%s.blacklist", world.getName().toLowerCase()),
-    //                    Collections.EMPTY_LIST,
-    //                    "Blacklisted items must be a valid item ID (eg. minecraft:arrow)");
-    //        }
-    //    }
+    @Listener
+    public void onGameInitializationEvent(ClickInventoryEvent.Primary event) {
+    }
 
     @Listener
     public void onClientConnectionEventJoin(ClientConnectionEvent.Join event) throws IOException, SQLException {
@@ -278,6 +256,8 @@ public class Backpack {
                 }
                 session.getTransaction().commit();
                 session.close();
+            } else if (containerChest.getLowerChestInventory() instanceof InventoryBlacklist) {
+
             }
         }
     }
