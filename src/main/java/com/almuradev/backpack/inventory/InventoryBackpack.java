@@ -78,7 +78,7 @@ public class InventoryBackpack extends InventoryDatabase {
         }
 
         final Backpacks record = (Backpacks) session.createCriteria(Backpacks.class).add(Restrictions.eq("backpackId", backpack.getRecord()
-                .getBackpackId())).uniqueResult();
+                .getId())).uniqueResult();
         if (record != null) {
             record.setSize(event.getTargetSize());
             session.beginTransaction();

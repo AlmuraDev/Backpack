@@ -26,5 +26,5 @@ package com.almuradev.backpack.api.database.entity;
 
 public interface InventoryEntity {
 
-    long getBackpackId();
+    long getId();
 }

@@ -62,9 +62,9 @@ public class Blacklists implements InventoryEntity {
     private String title;
 
     @OneToMany(mappedBy = "blacklists")
-    private Set<Backpacks.Slots> slots = Sets.newHashSet();
+    private Set<Blacklists.Slots> slots = Sets.newHashSet();
 
-    public long getBackpackId() {
+    public long getId() {
         return blacklistId;
     }
 
@@ -92,11 +92,11 @@ public class Blacklists implements InventoryEntity {
         this.title = title;
     }
 
-    public Set<Backpacks.Slots> getSlots() {
+    public Set<Blacklists.Slots> getSlots() {
         return slots;
     }
 
-    public void setSlots(Set<Backpacks.Slots> slots) {
+    public void setSlots(Set<Blacklists.Slots> slots) {
         this.slots = slots;
     }
 
@@ -123,7 +123,7 @@ public class Blacklists implements InventoryEntity {
 
         @Id
         @GeneratedValue(strategy = GenerationType.IDENTITY)
-        long id;
+        long slotId;
 
         @ManyToOne(targetEntity = Blacklists.class)
         @JoinColumn(name = "blacklistId")
@@ -136,7 +136,7 @@ public class Blacklists implements InventoryEntity {
         private Clob data;
 
         public long getId() {
-            return id;
+            return slotId;
         }
 
         public Blacklists getInventories() {

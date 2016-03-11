@@ -67,7 +67,7 @@ public class Backpacks implements InventoryEntity {
     @OneToMany(mappedBy = "backpacks")
     private Set<Slots> slots = Sets.newHashSet();
 
-    public long getBackpackId() {
+    public long getId() {
         return backpackId;
     }
 
