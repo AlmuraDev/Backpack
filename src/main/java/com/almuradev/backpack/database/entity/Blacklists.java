@@ -62,7 +62,7 @@ public class Blacklists implements InventoryEntity {
     private String title;
 
     @OneToMany(mappedBy = "blacklists")
-    private Set<Blacklists.Slots> slots = Sets.newHashSet();
+    private Set<Slots> slots = Sets.newHashSet();
 
     public long getId() {
         return blacklistId;
@@ -118,7 +118,7 @@ public class Blacklists implements InventoryEntity {
     }
 
     @Entity
-    @Table(name = "bp_blacklist_slots", uniqueConstraints = {@UniqueConstraint(columnNames = {"slotId"})})
+    @Table(name = "bp_blacklists_slots", uniqueConstraints = {@UniqueConstraint(columnNames = {"slotId"})})
     public static class Slots implements SlotsEntity {
 
         @Id

@@ -31,7 +31,6 @@ import com.google.common.collect.Sets;
 import org.hibernate.Criteria;
 import org.hibernate.Session;
 import org.hibernate.criterion.Restrictions;
-import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.world.World;
 
 import java.io.IOException;
@@ -51,7 +50,7 @@ public class BlacklistFactory {
         if (record == null) {
             record = new Blacklists();
             record.setWorldUniqueId(world.getUniqueId());
-            record.setTitle("[" + world.getName() + "] Blacklist #" + record.getPageId());
+            record.setTitle("[" + world.getName() + "] Blacklist #" + (record.getPageId() + 1));
             session.beginTransaction();
             session.saveOrUpdate(record);
             session.getTransaction().commit();
@@ -66,13 +65,18 @@ public class BlacklistFactory {
         return new InventoryBlacklist(record);
     }
 
-    public static Optional<InventoryBlacklist> get(World world, Player player) {
+    public static Optional<InventoryBlacklist> get(World world) {
         for (InventoryBlacklist inventory : BLACKLISTS) {
             if (world == null && inventory.getRecord().getWorldUniqueId() == null) {
                 return Optional.of(inventory);
             } else if (world != null && inventory.getRecord().getWorldUniqueId().equals(world.getUniqueId())) {
                 return Optional.of(inventory);
             }
+        }
+        try {
+            return Optional.of(load(world));
+        } catch (IOException e) {
+            Backpack.instance.logger.warn("Unable to load the blacklist");
         }
         return Optional.empty();
     }

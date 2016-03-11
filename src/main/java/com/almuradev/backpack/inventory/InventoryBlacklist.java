@@ -24,12 +24,13 @@
  */
 package com.almuradev.backpack.inventory;
 
+import com.almuradev.backpack.api.inventory.Sizes;
 import com.almuradev.backpack.database.entity.Blacklists;
 
 public class InventoryBlacklist extends InventoryDatabase {
 
     public InventoryBlacklist(Blacklists record) {
-        super(record.getTitle(), 64, record);
+        super(record.getTitle(), Sizes.GIGANTIC.value, record);
     }
 
     @Override

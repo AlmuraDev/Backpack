@@ -24,9 +24,15 @@
  */
 package com.almuradev.backpack;
 
+import static org.spongepowered.api.command.args.GenericArguments.optional;
+import static org.spongepowered.api.command.args.GenericArguments.string;
+
+import com.almuradev.backpack.api.inventory.Sizes;
 import com.almuradev.backpack.database.DatabaseManager;
 import com.almuradev.backpack.database.entity.Backpacks;
+import com.almuradev.backpack.database.entity.Blacklists;
 import com.almuradev.backpack.inventory.InventoryBackpack;
+import com.almuradev.backpack.inventory.InventoryBlacklist;
 import com.almuradev.backpack.util.Storage;
 import com.google.inject.Inject;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -54,6 +60,7 @@ import org.spongepowered.api.plugin.PluginContainer;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.TextTemplate;
 import org.spongepowered.api.text.format.TextColors;
+import org.spongepowered.api.world.World;
 
 import java.io.File;
 import java.io.IOException;
@@ -157,7 +164,7 @@ public class Backpack {
                 .child(CommandSpec.builder()
                         .permission("backpack.command.view")
                         .description(Text.of("Lets you view another backpack"))
-                        .arguments(GenericArguments.string(Text.of("player")))
+                        .arguments(string(Text.of("player")))
                         .executor((src, args) -> {
                             if (!(src instanceof Player)) {
                                 throw new CommandException(Text.of(TextColors.RED, "Must be in-game to view another backpack!"));
@@ -181,6 +188,45 @@ public class Backpack {
                             return CommandResult.success();
                         })
                         .build(), "view", "vw")
+                .child(CommandSpec.builder()
+                        .permission("backpack.command.blacklist")
+                        .description(Text.of("Opens the blacklist for the world"))
+                        .arguments(string(Text.of("player")), optional(string(Text.of("target"))))
+                        .executor((src, args) -> {
+                            if (!(src instanceof Player)) {
+                                throw new CommandException(Text.of(TextColors.RED, "Must be in-game to view a blacklist!"));
+                            }
+                            final String playerOrUser = args.<String>getOne("player").orElse(null);
+                            final Player player = Sponge.getServer().getPlayer(playerOrUser).orElse(null);
+                            if (player == null) {
+                                // TODO Handle User objects
+                            } else {
+                                final Optional<String> optTarget = args.<String>getOne("target");
+                                Optional<InventoryBlacklist> optBlacklistInventory = Optional.empty();
+                                if (optTarget.isPresent()) {
+                                    if (optTarget.get().equalsIgnoreCase("global")) {
+                                        optBlacklistInventory = BlacklistFactory.get(null);
+                                    } else {
+                                        final Optional<World> optWorld = Sponge.getServer().getWorld(optTarget.get());
+                                        if (optWorld.isPresent()) {
+                                            optBlacklistInventory = BlacklistFactory.get(optWorld.get());
+                                        }
+                                    }
+                                } else {
+                                    optBlacklistInventory = BlacklistFactory.get(player.getWorld());
+                                }
+                                if (optBlacklistInventory.isPresent()) {
+                                    final boolean modifiable = src.hasPermission("backpack.command.blacklist.modify");
+                                    final InventoryBlacklist inventory = new InventoryBlacklist(optBlacklistInventory.get().getRecord());
+                                    inventory.setModifiable(modifiable);
+                                    src.sendMessage(Text.of(String.format("Opening %s in %s mode.", optBlacklistInventory.get().getName(),
+                                            modifiable ? "live" : "read-only")));
+                                    ((EntityPlayerMP) src).displayGUIChest(inventory);
+                                }
+                            }
+                            return CommandResult.success();
+                        })
+                        .build(), "blacklist", "bl")
                 .child(CommandSpec.builder()
                         .permission("backpack.command.reload")
                         .description(Text.of("Reloads the configuration file."))
@@ -215,6 +261,18 @@ public class Backpack {
                 final Session session = DatabaseManager.getSessionFactory().openSession();
                 session.beginTransaction();
                 for (int i = 0; i < record.getSize(); i++) {
+                    final ItemStack stack = (ItemStack) (Object) inventory.getStackInSlot(i);
+                    DatabaseManager.saveSlot(session, record, i, stack == null ? null : stack.toContainer());
+                }
+                session.getTransaction().commit();
+                session.close();
+            } else if (containerChest.getLowerChestInventory() instanceof InventoryBlacklist) {
+                final InventoryBlacklist inventory = (InventoryBlacklist) containerChest.getLowerChestInventory();
+                final Blacklists record = inventory.getRecord();
+
+                final Session session = DatabaseManager.getSessionFactory().openSession();
+                session.beginTransaction();
+                for (int i = 0; i < Sizes.GIGANTIC.value; i++) {
                     final ItemStack stack = (ItemStack) (Object) inventory.getStackInSlot(i);
                     DatabaseManager.saveSlot(session, record, i, stack == null ? null : stack.toContainer());
                 }
