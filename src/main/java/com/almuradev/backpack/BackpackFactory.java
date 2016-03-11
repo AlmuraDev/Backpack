@@ -43,7 +43,6 @@ import java.util.Set;
 public class BackpackFactory {
 
     private static final Set<InventoryBackpack> BACKPACKS = Sets.newConcurrentHashSet();
-    private static final Set<InventoryBlacklist> BLACKLISTS = Sets.newConcurrentHashSet();
 
     public static InventoryBackpack load(World world, Player player) throws IOException {
         final Session session = DatabaseManager.getSessionFactory().openSession();

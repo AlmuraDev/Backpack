@@ -25,6 +25,8 @@
 package com.almuradev.backpack;
 
 import static org.spongepowered.api.command.args.GenericArguments.optional;
+import static org.spongepowered.api.command.args.GenericArguments.player;
+import static org.spongepowered.api.command.args.GenericArguments.playerOrSource;
 import static org.spongepowered.api.command.args.GenericArguments.string;
 
 import com.almuradev.backpack.api.inventory.Sizes;
@@ -51,9 +53,11 @@ import org.spongepowered.api.config.DefaultConfig;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.entity.DestructEntityEvent;
+import org.spongepowered.api.event.game.state.GameInitializationEvent;
 import org.spongepowered.api.event.game.state.GamePreInitializationEvent;
 import org.spongepowered.api.event.item.inventory.InteractInventoryEvent;
 import org.spongepowered.api.event.network.ClientConnectionEvent;
+import org.spongepowered.api.event.world.LoadWorldEvent;
 import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.plugin.Plugin;
 import org.spongepowered.api.plugin.PluginContainer;
@@ -191,38 +195,33 @@ public class Backpack {
                 .child(CommandSpec.builder()
                         .permission("backpack.command.blacklist")
                         .description(Text.of("Opens the blacklist for the world"))
-                        .arguments(string(Text.of("player")), optional(string(Text.of("target"))))
+                        .arguments(optional(string(Text.of("target"))))
                         .executor((src, args) -> {
                             if (!(src instanceof Player)) {
                                 throw new CommandException(Text.of(TextColors.RED, "Must be in-game to view a blacklist!"));
                             }
-                            final String playerOrUser = args.<String>getOne("player").orElse(null);
-                            final Player player = Sponge.getServer().getPlayer(playerOrUser).orElse(null);
-                            if (player == null) {
-                                // TODO Handle User objects
-                            } else {
-                                final Optional<String> optTarget = args.<String>getOne("target");
-                                Optional<InventoryBlacklist> optBlacklistInventory = Optional.empty();
-                                if (optTarget.isPresent()) {
-                                    if (optTarget.get().equalsIgnoreCase("global")) {
-                                        optBlacklistInventory = BlacklistFactory.get(null);
-                                    } else {
-                                        final Optional<World> optWorld = Sponge.getServer().getWorld(optTarget.get());
-                                        if (optWorld.isPresent()) {
-                                            optBlacklistInventory = BlacklistFactory.get(optWorld.get());
-                                        }
-                                    }
+                            final Player player = (Player) src;
+                            Optional<String> optTarget = args.getOne("target");
+                            Optional<InventoryBlacklist> optBlacklistInventory = Optional.empty();
+                            if (optTarget.isPresent()) {
+                                if (optTarget.get().equalsIgnoreCase("global")) {
+                                    optBlacklistInventory = BlacklistFactory.get(Optional.empty());
                                 } else {
-                                    optBlacklistInventory = BlacklistFactory.get(player.getWorld());
+                                    final Optional<World> optWorld = Sponge.getServer().getWorld(optTarget.get());
+                                    if (optWorld.isPresent()) {
+                                        optBlacklistInventory = BlacklistFactory.get(optWorld);
+                                    }
                                 }
-                                if (optBlacklistInventory.isPresent()) {
-                                    final boolean modifiable = src.hasPermission("backpack.command.blacklist.modify");
-                                    final InventoryBlacklist inventory = new InventoryBlacklist(optBlacklistInventory.get().getRecord());
-                                    inventory.setModifiable(modifiable);
-                                    src.sendMessage(Text.of(String.format("Opening %s in %s mode.", optBlacklistInventory.get().getName(),
-                                            modifiable ? "live" : "read-only")));
-                                    ((EntityPlayerMP) src).displayGUIChest(inventory);
-                                }
+                            } else {
+                                optBlacklistInventory = BlacklistFactory.get(Optional.of(player.getWorld()));
+                            }
+                            if (optBlacklistInventory.isPresent()) {
+                                final boolean modifiable = src.hasPermission("backpack.command.blacklist.modify");
+                                //final InventoryBlacklist inventory = new InventoryBlacklist(optBlacklistInventory.get().getRecord());
+                                optBlacklistInventory.get().setModifiable(modifiable);
+                                src.sendMessage(Text.of(String.format("Opening %s in %s mode.", optBlacklistInventory.get().getName(),
+                                        modifiable ? "live" : "read-only")));
+                                ((EntityPlayerMP) src).displayGUIChest(optBlacklistInventory.get());
                             }
                             return CommandResult.success();
                         })
@@ -243,8 +242,18 @@ public class Backpack {
     }
 
     @Listener
-    public void onClientConnectionEventJoin(ClientConnectionEvent.Join event) throws IOException, SQLException {
+    public void onGameInitializationEvent(GameInitializationEvent event) throws IOException {
+        BlacklistFactory.load(Optional.empty());
+    }
+
+    @Listener
+    public void onClientConnectionEventJoin(ClientConnectionEvent.Join event) throws IOException {
         BackpackFactory.load(event.getTargetEntity().getWorld(), event.getTargetEntity());
+    }
+
+    @Listener
+    public void onLoadWorldEvent(LoadWorldEvent event) throws IOException {
+        BlacklistFactory.load(Optional.of(event.getTargetWorld()));
     }
 
     @Listener

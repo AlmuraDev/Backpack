@@ -42,15 +42,20 @@ public class BlacklistFactory {
 
     private static final Set<InventoryBlacklist> BLACKLISTS = Sets.newConcurrentHashSet();
 
-    public static InventoryBlacklist load(World world) throws IOException {
+    public static InventoryBlacklist load(Optional<World> world) throws IOException {
         final Session session = DatabaseManager.getSessionFactory().openSession();
         final Criteria criteria = session.createCriteria(Blacklists.class);
-        Blacklists record = (Blacklists) criteria.add(Restrictions.and(Restrictions.eq("worldUniqueId", world.getUniqueId()))).uniqueResult();
+        Blacklists record;
+        if (world.isPresent()) {
+            record = (Blacklists) criteria.add(Restrictions.and(Restrictions.eq("worldUniqueId", world.get().getUniqueId()))).uniqueResult();
+        } else {
+            record = (Blacklists) criteria.add(Restrictions.and(Restrictions.eq("worldUniqueId", null))).uniqueResult();
+        }
 
         if (record == null) {
             record = new Blacklists();
-            record.setWorldUniqueId(world.getUniqueId());
-            record.setTitle("[" + world.getName() + "] Blacklist #" + (record.getPageId() + 1));
+            record.setWorldUniqueId(world.isPresent() ? world.get().getUniqueId() : null);
+            record.setTitle(world.isPresent() ? world.get().getName() : "Global" + " Blacklist #" + (record.getPageId() + 1));
             session.beginTransaction();
             session.saveOrUpdate(record);
             session.getTransaction().commit();
@@ -65,11 +70,13 @@ public class BlacklistFactory {
         return new InventoryBlacklist(record);
     }
 
-    public static Optional<InventoryBlacklist> get(World world) {
+    public static Optional<InventoryBlacklist> get(Optional<World> world) {
         for (InventoryBlacklist inventory : BLACKLISTS) {
-            if (world == null && inventory.getRecord().getWorldUniqueId() == null) {
-                return Optional.of(inventory);
-            } else if (world != null && inventory.getRecord().getWorldUniqueId().equals(world.getUniqueId())) {
+            if (world.isPresent() && inventory.getRecord().getWorldUniqueId() != null) {
+                if (world.get().getUniqueId().equals(inventory.getRecord().getWorldUniqueId())) {
+                    return Optional.of(inventory);
+                }
+            } else if (!world.isPresent() && inventory.getRecord().getWorldUniqueId() == null) {
                 return Optional.of(inventory);
             }
         }
