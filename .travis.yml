@@ -20,6 +20,8 @@ notifications:
   irc:
     channels:
       - "irc.esper.net#Almura"
+    use_notice: true
+    skip_join: true
     nick:
       secure: "Tl8EE8vO4TOhbHhjhIxVJIp1oiLUn1PcFbJaKeR4SV8m8Gbtg7Y4DBsI18Q8gpzVQmPp32grPw7UA8XIslerFUSMZva712Vmh5oW1nZvu90pmwk2+9C156klocWhKC7kc8KIzn7NI3DEkOk1UbIXhqdjQpuhlTZ8zDIcDqcVPdI="
     password:
