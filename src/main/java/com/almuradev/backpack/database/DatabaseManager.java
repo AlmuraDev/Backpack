@@ -82,8 +82,8 @@ public class DatabaseManager {
         // Add tables here
         configuration.addAnnotatedClass(Backpacks.class);
         configuration.addAnnotatedClass(Backpacks.Slots.class);
-//        configuration.addAnnotatedClass(Blacklists.class);
-//        configuration.addAnnotatedClass(Blacklists.Slots.class);
+        //        configuration.addAnnotatedClass(Blacklists.class);
+        //        configuration.addAnnotatedClass(Blacklists.Slots.class);
     }
 
     public static SessionFactory getSessionFactory() {

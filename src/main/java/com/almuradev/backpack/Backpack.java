@@ -27,7 +27,6 @@ package com.almuradev.backpack;
 import com.almuradev.backpack.database.DatabaseManager;
 import com.almuradev.backpack.database.entity.Backpacks;
 import com.almuradev.backpack.inventory.InventoryBackpack;
-import com.almuradev.backpack.inventory.InventoryBlacklist;
 import com.almuradev.backpack.util.Storage;
 import com.google.inject.Inject;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -47,7 +46,6 @@ import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.entity.DestructEntityEvent;
 import org.spongepowered.api.event.game.state.GamePreInitializationEvent;
-import org.spongepowered.api.event.item.inventory.ClickInventoryEvent;
 import org.spongepowered.api.event.item.inventory.InteractInventoryEvent;
 import org.spongepowered.api.event.network.ClientConnectionEvent;
 import org.spongepowered.api.item.inventory.ItemStack;
@@ -183,36 +181,6 @@ public class Backpack {
                             return CommandResult.success();
                         })
                         .build(), "view", "vw")
-                //                .child(CommandSpec.builder()
-                //                        .permission("backpack.command.blacklist")
-                //                        .description(Text.of("Lets you view the blacklist"))
-                //                        .arguments(GenericArguments.string(Text.of("player")))
-                //                        .executor((src, args) -> {
-                //                            if (!(src instanceof Player)) {
-                //                                throw new CommandException(Text.of(TextColors.RED, "Must be in-game to view the blacklist!"));
-                //                            }
-                //                            final String playerOrUser = args.<String>getOne("player").orElse(null);
-                //                            final Player player = Sponge.getServer().getPlayer(playerOrUser).orElse(null);
-                //                            if (player == null) {
-                //                                // TODO Handle User objects
-                //                            } else {
-                //                                // TODO Possibly add system that prevents adding items to read-only backpacks
-                //                                final Optional<InventoryBackpack> optBackpackInventory = BackpackFactory.get(player.getWorld(),
-                // player);
-                //                                if (optBackpackInventory.isPresent()) {
-                //                                    final boolean modifiable = !src.hasPermission("backpack.command.view.modify");
-                //                                    final InventoryBasic inventory =
-                //                                            modifiable ? optBackpackInventory.get() : optBackpackInventory.get().getReadOnly();
-                //                                    inventory.setCustomName(player.getName() + "'s Backpack");
-                //                                    src.sendMessage(Text.of(String
-                //                                            .format("Opening %s's backpack in %s mode.", player.getName(), modifiable ? "live" :
-                // "read-only")));
-                //                                    ((EntityPlayerMP) src).displayGUIChest(inventory);
-                //                                }
-                //                            }
-                //                            return CommandResult.success();
-                //                        })
-                //                        .build(), "view", "vw")
                 .child(CommandSpec.builder()
                         .permission("backpack.command.reload")
                         .description(Text.of("Reloads the configuration file."))
@@ -226,10 +194,6 @@ public class Backpack {
                         .build(), "reload", "rl")
                 .build(), "backpack", "bp");
         DatabaseManager.init(Paths.get(".\\" + Backpack.instance.configuration.getParent()), "backpacks");
-    }
-
-    @Listener
-    public void onGameInitializationEvent(ClickInventoryEvent.Primary event) {
     }
 
     @Listener
@@ -256,8 +220,6 @@ public class Backpack {
                 }
                 session.getTransaction().commit();
                 session.close();
-            } else if (containerChest.getLowerChestInventory() instanceof InventoryBlacklist) {
-
             }
         }
     }
