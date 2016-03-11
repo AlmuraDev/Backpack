@@ -24,7 +24,17 @@
  */
 package com.almuradev.backpack.api.database.entity;
 
+import java.util.UUID;
+
 public interface InventoryEntity {
 
     long getId();
+
+    UUID getWorldUniqueId();
+
+    void setWorldUniqueId(UUID worldUniqueId);
+
+    String getTitle();
+
+    void setTitle(String title);
 }
