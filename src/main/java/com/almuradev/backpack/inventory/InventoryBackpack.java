@@ -42,11 +42,11 @@ public class InventoryBackpack extends InventoryBasic {
         return record;
     }
 
+    @Override
     public InventoryBackpack clone() {
         final InventoryBackpack clone = new InventoryBackpack(record);
         for (int i = 0; i < this.getSizeInventory(); i++) {
             clone.setInventorySlotContents(i, this.getStackInSlot(i));
-            clone.setCustomName(this.getName());
         }
         return clone;
     }

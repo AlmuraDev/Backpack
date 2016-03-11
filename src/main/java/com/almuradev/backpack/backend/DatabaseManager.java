@@ -26,6 +26,7 @@ package com.almuradev.backpack.backend;
 
 import com.almuradev.backpack.Backpack;
 import com.almuradev.backpack.BackpackFactory;
+import com.almuradev.backpack.api.event.BackpackEvent;
 import com.almuradev.backpack.backend.entity.Backpacks;
 import com.almuradev.backpack.backend.entity.Slots;
 import com.almuradev.backpack.inventory.InventoryBackpack;
@@ -37,11 +38,14 @@ import org.hibernate.SessionFactory;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.cfg.Configuration;
 import org.hibernate.criterion.Restrictions;
+import org.spongepowered.api.Sponge;
 import org.spongepowered.api.command.CommandSource;
 import org.spongepowered.api.data.DataContainer;
 import org.spongepowered.api.data.DataView;
 import org.spongepowered.api.data.translator.ConfigurateTranslator;
 import org.spongepowered.api.entity.living.player.Player;
+import org.spongepowered.api.event.cause.Cause;
+import org.spongepowered.api.event.cause.NamedCause;
 import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.TextTemplate;
@@ -131,66 +135,6 @@ public class DatabaseManager {
         inventory.setInventorySlotContents(slotIndex, (net.minecraft.item.ItemStack) (Object) slotStack);
     }
 
-    public static boolean downgrade(Session session, InventoryBackpack inventory, CommandSource src, Player player) {
-        return resize(session, inventory, false, src, player);
-    }
-
-    public static boolean upgrade(Session session, InventoryBackpack inventory, CommandSource src, Player player) {
-        return resize(session, inventory, true, src, player);
-    }
-
-    private static boolean resize(Session session, InventoryBackpack inventory, boolean upgrade, CommandSource src, Player player) {
-        final int originalSize = inventory.getRecord().getSize();
-        final int targetSize = originalSize + (upgrade ? 9 : -9);
-        if (targetSize < getLimitSize(src, false) || targetSize > getLimitSize(src, true)) {
-            session.close();
-            final String node = "template.backpack.resize.limit";
-            final TextTemplate template = Backpack.instance.storage.getChildNodeValue(node, TextTemplate.class);
-            src.sendMessage(template, ImmutableMap.of(
-                    "target", src == player ? Text.of("Your") : Text.of(TextColors.LIGHT_PURPLE, player.getName(), TextColors.RESET, "'s"),
-                    "resize", Text.of(upgrade ? "maximum" : "minimum")
-            ));
-            return false;
-        }
-        final Backpacks record = (Backpacks) session.createCriteria(Backpacks.class).add(Restrictions.eq("backpackId", inventory.getRecord()
-                .getBackpackId())).uniqueResult();
-        if (record != null) {
-            record.setSize(targetSize);
-            session.beginTransaction();
-            session.saveOrUpdate(record);
-            session.getTransaction().commit();
-
-            final InventoryBackpack resized = new InventoryBackpack(record);
-            for (int i = 0; i < record.getSize(); i++) {
-                resized.setInventorySlotContents(i, inventory.getStackInSlot(i));
-            }
-
-            BackpackFactory.put(resized);
-            session.close();
-            if (src != player) {
-                src.sendMessage(Backpack.instance.storage.getChildNodeValue("template.backpack.resize.success", TextTemplate.class), ImmutableMap.of(
-                        "target", Text.of(TextColors.LIGHT_PURPLE, player.getName(), TextColors.RESET, "'s"),
-                        "resize", upgrade ? Text.of(TextColors.GREEN, "upgraded") : Text.of(TextColors.RED, "downgraded"),
-                        "originalSize", Text.of(originalSize),
-                        "targetSize", Text.of(targetSize)
-                ));
-            }
-            player.sendMessage(Backpack.instance.storage.getChildNodeValue("template.backpack.resize.success", TextTemplate.class), ImmutableMap.of(
-                    "target", Text.of("Your"),
-                    "resize", upgrade ? Text.of(TextColors.GREEN, "upgraded") : Text.of(TextColors.RED, "downgraded"),
-                    "originalSize", Text.of(originalSize),
-                    "targetSize", Text.of(targetSize)
-            ));
-            return true;
-        }
-        session.close();
-        src.sendMessage(Backpack.instance.storage.getChildNodeValue("template.backpack.resize.failure", TextTemplate.class), ImmutableMap.of(
-                "resize", upgrade ? Text.of(TextColors.GREEN, "upgrade") : Text.of(TextColors.RED, "downgrade"),
-                "target", src == player ? Text.of("Your") : Text.of(TextColors.LIGHT_PURPLE, player.getName(), TextColors.RESET, "'s")
-        ));
-        return false;
-    }
-
     public static int getDefaultSize(Player player) {
         final int defaultSize = 9;
         Optional<Sizes> optSize = Optional.empty();
@@ -208,16 +152,62 @@ public class DatabaseManager {
         return optSize.isPresent() ? optSize.get().value : defaultSize;
     }
 
-    public static int getLimitSize(CommandSource src, boolean upgrade) {
-        final int defaultSize = upgrade ? 54 : 9;
+    public static void downgrade(Session session, InventoryBackpack inventory, CommandSource src, Player player) {
+        final BackpackEvent.Resize event = new BackpackEvent.Resize(inventory, inventory.getRecord().getSize() - 9, Cause.of(NamedCause.source(src)));
+        Sponge.getEventManager().post(event);
+        if (!event.isCancelled()) {
+            resize(session, inventory, src, player, event);
+        }
+    }
+
+    public static void upgrade(Session session, InventoryBackpack inventory, CommandSource src, Player player) {
+        final BackpackEvent.Resize event = new BackpackEvent.Resize(inventory, inventory.getRecord().getSize() + 9, Cause.of(NamedCause.source(src)));
+        Sponge.getEventManager().post(event);
+        if (!event.isCancelled()) {
+            resize(session, inventory, src, player, event);
+        }
+    }
+
+    private static void resize(Session session, InventoryBackpack backpack, CommandSource src, Player player, BackpackEvent.Resize event) {
+        if (event.getTargetSize() < getLimitSize(src, false) | event.getTargetSize() > getLimitSize(src, true)) {
+            session.close();
+            sendResultMessage("template.backpack.resize.limit", src, player, event);
+            return;
+        }
+
+        final Backpacks record = (Backpacks) session.createCriteria(Backpacks.class).add(Restrictions.eq("backpackId", backpack.getRecord()
+                .getBackpackId())).uniqueResult();
+        if (record != null) {
+            record.setSize(event.getTargetSize());
+            session.beginTransaction();
+            session.saveOrUpdate(record);
+            session.getTransaction().commit();
+
+            final InventoryBackpack resized = new InventoryBackpack(record);
+            for (int i = 0; i < record.getSize(); i++) {
+                resized.setInventorySlotContents(i, backpack.getStackInSlot(i));
+            }
+
+            BackpackFactory.put(resized);
+            session.close();
+            sendResultMessage("template.backpack.resize.success", src, player, event);
+            return;
+        }
+        session.close();
+
+        sendResultMessage("template.backpack.resize.failure", src, player, event);
+    }
+
+    public static int getLimitSize(CommandSource src, boolean max) {
+        final int defaultSize = max ? 54 : 9;
         Optional<Sizes> optSize = Optional.empty();
         if (src instanceof Player) {
             final Player player = (Player) src;
-            final String rootNode = "backpack." + player.getWorld().getName().toLowerCase() + ".size." + (upgrade ? "max" : "min");
+            final String rootNode = "backpack." + player.getWorld().getName().toLowerCase() + ".size." + (max ? "max" : "min");
             for (Sizes size : Sizes.values()) {
                 if (player.hasPermission(rootNode + size.value)) {
                     if (optSize.isPresent()) {
-                        if (upgrade ? (size.value > optSize.get().value) : (size.value < optSize.get().value)) {
+                        if (max ? (size.value > optSize.get().value) : (size.value < optSize.get().value)) {
                             optSize = Optional.of(size);
                         }
                     } else {
@@ -227,6 +217,40 @@ public class DatabaseManager {
             }
         }
         return optSize.isPresent() ? optSize.get().value : defaultSize;
+    }
+
+    private static void sendResultMessage(String node, CommandSource src, Player player, BackpackEvent.Resize event) {
+        final TextTemplate template = Backpack.instance.storage.getChildNodeValue(node, TextTemplate.class);
+        switch (node.toLowerCase()) {
+            case "template.backpack.resize.failure":
+                src.sendMessage(Backpack.instance.storage.getChildNodeValue("template.backpack.resize.failure", TextTemplate.class), ImmutableMap.of(
+                        "target", src == player ? Text.of("Your") : Text.of(TextColors.LIGHT_PURPLE, player.getName(), TextColors.RESET, "'s")
+                ));
+                break;
+            case "template.backpack.resize.limit":
+                src.sendMessage(template, ImmutableMap.of(
+                        "target", src == player ? Text.of("Your") : Text.of(TextColors.LIGHT_PURPLE, player.getName(), TextColors.RESET, "'s"),
+                        "min", Text.of(getLimitSize(src, false)),
+                        "max", Text.of(getLimitSize(src, true))
+                ));
+                break;
+            case "template.backpack.resize.success":
+                if (src != player) {
+                    src.sendMessage(Backpack.instance.storage.getChildNodeValue("template.backpack.resize.success", TextTemplate.class),
+                            ImmutableMap.of(
+                                    "target", Text.of(TextColors.LIGHT_PURPLE, player.getName(), TextColors.RESET, "'s"),
+                                    "originalSize", Text.of(event.getBackpack().getSizeInventory()),
+                                    "targetSize", Text.of(event.getTargetSize())
+                            ));
+                }
+                player.sendMessage(Backpack.instance.storage.getChildNodeValue("template.backpack.resize.success", TextTemplate.class),
+                        ImmutableMap.of(
+                                "target", Text.of("Your"),
+                                "originalSize", Text.of(event.getBackpack().getSizeInventory()),
+                                "targetSize", Text.of(event.getTargetSize())
+                        ));
+                break;
+        }
     }
 
     private static String clobToString(java.sql.Clob data) throws SQLException, IOException {

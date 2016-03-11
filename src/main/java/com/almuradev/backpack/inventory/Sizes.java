@@ -33,12 +33,13 @@ public enum Sizes {
     GIGANTIC(54);
 
     public final int value;
+
     Sizes(int value) {
         this.value = value;
     }
 
     public static Sizes get(int size) {
-        switch(size) {
+        switch (size) {
             case 18:
                 return SMALL;
             case 27:

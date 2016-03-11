@@ -24,6 +24,7 @@
  */
 package com.almuradev.backpack;
 
+import com.almuradev.backpack.api.event.BackpackEvent;
 import com.almuradev.backpack.backend.DatabaseManager;
 import com.almuradev.backpack.backend.entity.Backpacks;
 import com.almuradev.backpack.inventory.InventoryBackpack;
@@ -47,6 +48,7 @@ import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.entity.DestructEntityEvent;
 import org.spongepowered.api.event.game.state.GamePreInitializationEvent;
+import org.spongepowered.api.event.item.inventory.ClickInventoryEvent;
 import org.spongepowered.api.event.item.inventory.InteractInventoryEvent;
 import org.spongepowered.api.event.network.ClientConnectionEvent;
 import org.spongepowered.api.item.inventory.ItemStack;
@@ -84,9 +86,8 @@ public class Backpack {
                 .key("template.backpack.resize.success")
                 .value(TextTemplate.of(
                         TextTemplate.arg("target"),
-                        " backpack was ",
-                        TextTemplate.arg("resize"),
-                        " from ", TextTemplate.arg("originalSize"),
+                        " backpack was resized from ",
+                        TextTemplate.arg("originalSize"),
                         " to ",
                         TextTemplate.arg("targetSize")))
                 .type(Optional.of(TextTemplate.class))
@@ -95,8 +96,7 @@ public class Backpack {
         storage.registerDefaultNode(Storage.DefaultNode.builder(TextTemplate.class)
                 .key("template.backpack.resize.failure")
                 .value(TextTemplate.of(
-                        "Unable to ",
-                        TextTemplate.arg("resize"),
+                        "Unable to resize",
                         TextTemplate.arg("target"),
                         " backpack"))
                 .type(Optional.of(TextTemplate.class))
@@ -106,9 +106,11 @@ public class Backpack {
                 .key("template.backpack.resize.limit")
                 .value(TextTemplate.of(
                         TextTemplate.arg("target"),
-                        " backpack has already reached the ",
-                        TextTemplate.arg("resize"),
-                        " size"))
+                        " backpack has already reached its size limit (min: ",
+                        TextTemplate.arg("min"),
+                        ", max: ",
+                        TextTemplate.arg("max"),
+                        ")"))
                 .type(Optional.of(TextTemplate.class))
                 .build()
         );
@@ -238,7 +240,7 @@ public class Backpack {
                         })
                         .build(), "reload", "rl")
                 .build(), "backpack", "bp");
-        DatabaseManager.init(Paths.get(".\\config\\backpack"), "backpacks");
+        DatabaseManager.init(Paths.get(".\\" + Backpack.instance.configuration.getParent()), "backpacks");
     }
 
     // TODO Blacklist implementation
