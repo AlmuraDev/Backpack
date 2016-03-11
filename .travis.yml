@@ -20,7 +20,3 @@ notifications:
   irc:
     channels:
       - "irc.esper.net#Almura"
-    nick:
-      secure: "GGaDdHDqsxZgMYn3aqxXPvZYr4HPUPFqme1rPhFmXRDSlvw+5ZZ0BimluWqYt3f8jOiIql8ji1ou0vrzGgPdhIoAeZ0uhqNgozPRiFQoytqUfjVXBYrUmMkZaQ01liNZbUzwkUMg2uaVLnCNgJPZbXw+u9RLwY4qGM8WDDXyOUw="
-    password:
-      secure: "FYA4vDrVtFuxxweYXcoajlbOe1x+sqqZRYJsFCRLGkWPg9MfN24tXfYeWW601bdD+Rv43KzQr/dhe0HokqPKG06I806AvxS0rImcy2gDzAcjfgNNZtaegPYw/6IeeM2alSTqYZEIRBViwtglzMRYFtwcz+RxbeDVvE465bWMa6M="
