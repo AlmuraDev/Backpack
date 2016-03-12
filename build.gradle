@@ -15,7 +15,6 @@ buildscript {
     }
 
     dependencies {
-        // VanillaGradle contains a custom ForgeGradle extension for SpongeCommon (see below)
         classpath 'net.minecrell:VanillaGradle:2.0.3_1'
         classpath 'net.minecraftforge.gradle:ForgeGradle:2.1-SNAPSHOT'
         classpath 'gradle.plugin.nl.javadude.gradle.plugins:license-gradle-plugin:0.12.0'
