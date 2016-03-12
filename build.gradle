@@ -6,17 +6,23 @@ buildscript {
             url = 'http://files.minecraftforge.net/maven'
         }
         maven {
-            url = 'https://plugins.gradle.org/m2/'
+            name = 'minecrell'
+            url = 'http://repo.minecrell.net/releases'
         }        
+        maven {
+            url = 'https://plugins.gradle.org/m2/'
+        }
     }
 
     dependencies {
+        // VanillaGradle contains a custom ForgeGradle extension for SpongeCommon (see below)
+        classpath 'net.minecrell:VanillaGradle:2.0.3_1'
         classpath 'net.minecraftforge.gradle:ForgeGradle:2.1-SNAPSHOT'
         classpath 'gradle.plugin.nl.javadude.gradle.plugins:license-gradle-plugin:0.12.0'
     }
 }
 
-apply plugin: 'net.minecraftforge.gradle.forge'
+apply plugin: 'net.minecrell.vanilla.server.library'
 apply plugin: 'com.github.hierynomus.license'
 
 defaultTasks 'clean', 'licenseFormat', 'build'
@@ -25,10 +31,10 @@ sourceCompatibility = '1.8'
 targetCompatibility = '1.8'
 
 archivesBaseName = project.name.toLowerCase()
-version = "${project.version}-r${project.apiVersion.split("-")[0]}"
+version = "${project.version}-r${project.apiVersion}-${project.minecraftVersion}"
 
 minecraft {
-    forgeVersion = project.forgeVersion
+    version = project.minecraftVersion
     mappings = project.mcpMappings
 }
 
@@ -43,7 +49,6 @@ repositories {
 dependencies {
     compile 'org.hibernate:hibernate-core:5.1.0.Final'
     compile 'org.hibernate:hibernate-hikaricp:5.1.0.Final'
-    compile "org.spongepowered:spongeapi:${project.apiVersion}"
 }
 
 configure([compileJava, compileTestJava]) {
@@ -65,6 +70,19 @@ license {
     mapping {
         java = 'SLASHSTAR_STYLE'
     }    
+}
+
+jar {
+    manifest {
+        attributes(
+            'Built-By': System.properties['user.name'],
+            'Created-By': System.properties['java.vm.version'] + ' (' + System.properties['java.vm.vendor'] + ')',
+            'Implementation-Title': project.name,
+            'Implementation-Version': version,
+            'Implementation-Vendor': url,
+            'TargetMinecraftVersion': project.minecraftVersion,
+        )
+    }
 }
 
 javadoc {

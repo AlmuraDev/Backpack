@@ -25,8 +25,6 @@
 package com.almuradev.backpack;
 
 import static org.spongepowered.api.command.args.GenericArguments.optional;
-import static org.spongepowered.api.command.args.GenericArguments.player;
-import static org.spongepowered.api.command.args.GenericArguments.playerOrSource;
 import static org.spongepowered.api.command.args.GenericArguments.string;
 
 import com.almuradev.backpack.api.inventory.Sizes;
@@ -217,7 +215,6 @@ public class Backpack {
                             }
                             if (optBlacklistInventory.isPresent()) {
                                 final boolean modifiable = src.hasPermission("backpack.command.blacklist.modify");
-                                //final InventoryBlacklist inventory = new InventoryBlacklist(optBlacklistInventory.get().getRecord());
                                 optBlacklistInventory.get().setModifiable(modifiable);
                                 src.sendMessage(Text.of(String.format("Opening %s in %s mode.", optBlacklistInventory.get().getName(),
                                         modifiable ? "live" : "read-only")));
