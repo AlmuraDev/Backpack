@@ -88,7 +88,7 @@ public class Backpack {
     @Listener
     public void onGamePreInitializationEvent(GamePreInitializationEvent event) {
         instance = this;
-        stash = new Stash(logger, configuration, loader);
+        stash = new Stash(logger, configuration, loader).init();
         stash.registerDefaultNode(CommentedDefaultNode.builder(TextTemplate.class)
                 .key("template.backpack.resize.success")
                 .value(TextTemplate.of(
@@ -121,7 +121,7 @@ public class Backpack {
                 .type(Optional.of(TextTemplate.class))
                 .build()
         );
-
+        stash.save();
 
         Sponge.getGame().getCommandManager().register(this, CommandSpec.builder()
                 .permission("backpack.command.open")
