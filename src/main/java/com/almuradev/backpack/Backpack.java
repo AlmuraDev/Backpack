@@ -33,7 +33,6 @@ import com.almuradev.backpack.database.entity.Backpacks;
 import com.almuradev.backpack.database.entity.Blacklists;
 import com.almuradev.backpack.inventory.InventoryBackpack;
 import com.almuradev.backpack.inventory.InventoryBlacklist;
-import com.almuradev.backpack.util.Storage;
 import com.google.inject.Inject;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.inventory.Container;
@@ -41,6 +40,8 @@ import net.minecraft.inventory.ContainerChest;
 import ninja.leaping.configurate.commented.CommentedConfigurationNode;
 import ninja.leaping.configurate.loader.ConfigurationLoader;
 import org.hibernate.Session;
+import org.inspirenxe.stash.Stash;
+import org.inspirenxe.stash.nodes.CommentedDefaultNode;
 import org.slf4j.Logger;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.command.CommandException;
@@ -75,7 +76,7 @@ public class Backpack {
 
     public static final String PLUGIN_ID = "com.almuradev.backpack", PLUGIN_NAME = "Backpack", PLUGIN_VERSION = "1.0";
     public static Backpack instance;
-    public Storage storage;
+    public Stash stash;
 
     @Inject public Logger logger;
     @Inject public PluginContainer container;
@@ -87,8 +88,8 @@ public class Backpack {
     @Listener
     public void onGamePreInitializationEvent(GamePreInitializationEvent event) {
         instance = this;
-        storage = new Storage(container, configuration, loader);
-        storage.registerDefaultNode(Storage.DefaultNode.builder(TextTemplate.class)
+        stash = new Stash(logger, configuration, loader);
+        stash.registerDefaultNode(CommentedDefaultNode.builder(TextTemplate.class)
                 .key("template.backpack.resize.success")
                 .value(TextTemplate.of(
                         TextTemplate.arg("target"),
@@ -99,7 +100,7 @@ public class Backpack {
                 .type(Optional.of(TextTemplate.class))
                 .build()
         );
-        storage.registerDefaultNode(Storage.DefaultNode.builder(TextTemplate.class)
+        stash.registerDefaultNode(CommentedDefaultNode.builder(TextTemplate.class)
                 .key("template.backpack.resize.failure")
                 .value(TextTemplate.of(
                         "Unable to resize",
@@ -108,7 +109,7 @@ public class Backpack {
                 .type(Optional.of(TextTemplate.class))
                 .build()
         );
-        storage.registerDefaultNode(Storage.DefaultNode.builder(TextTemplate.class)
+        stash.registerDefaultNode(CommentedDefaultNode.builder(TextTemplate.class)
                 .key("template.backpack.resize.limit")
                 .value(TextTemplate.of(
                         TextTemplate.arg("target"),
@@ -228,7 +229,7 @@ public class Backpack {
                         .description(Text.of("Reloads the configuration file."))
                         .executor((src, args) -> {
                             if (Sponge.getGame().getPlatform().getExecutionType().isServer()) {
-                                storage.init();
+                                stash.init();
                                 src.sendMessage(Text.of("Backpack configuration reloaded."));
                             }
                             return CommandResult.success();

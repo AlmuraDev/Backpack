@@ -43,11 +43,16 @@ repositories {
         name = 'sponge'
         url = 'http://repo.spongepowered.org/maven'
     }
+    maven {
+        name = 'sonatype'
+        url = 'https://oss.sonatype.org/content/repositories/public/'
+    }
 }
 
 dependencies {
     compile 'org.hibernate:hibernate-core:5.1.0.Final'
     compile 'org.hibernate:hibernate-hikaricp:5.1.0.Final'
+    compile 'org.inspirenxe:stash:1.0.0-SNAPSHOT'
 }
 
 configure([compileJava, compileTestJava]) {

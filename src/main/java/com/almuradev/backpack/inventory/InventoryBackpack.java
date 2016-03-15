@@ -122,10 +122,10 @@ public class InventoryBackpack extends InventoryDatabase {
     }
 
     private static void sendResultMessage(String node, CommandSource src, Player player, BackpackEvent.Resize event) {
-        final TextTemplate template = Backpack.instance.storage.getChildNodeValue(node, TextTemplate.class);
+        final TextTemplate template = Backpack.instance.stash.getChildNodeValue(node, TextTemplate.class);
         switch (node.toLowerCase()) {
             case "template.backpack.resize.failure":
-                src.sendMessage(Backpack.instance.storage.getChildNodeValue("template.backpack.resize.failure", TextTemplate.class), ImmutableMap.of(
+                src.sendMessage(Backpack.instance.stash.getChildNodeValue("template.backpack.resize.failure", TextTemplate.class), ImmutableMap.of(
                         "target", src == player ? Text.of("Your") : Text.of(TextColors.LIGHT_PURPLE, player.getName(), TextColors.RESET, "'s")
                 ));
                 break;
@@ -138,14 +138,14 @@ public class InventoryBackpack extends InventoryDatabase {
                 break;
             case "template.backpack.resize.success":
                 if (src != player) {
-                    src.sendMessage(Backpack.instance.storage.getChildNodeValue("template.backpack.resize.success", TextTemplate.class),
+                    src.sendMessage(Backpack.instance.stash.getChildNodeValue("template.backpack.resize.success", TextTemplate.class),
                             ImmutableMap.of(
                                     "target", Text.of(TextColors.LIGHT_PURPLE, player.getName(), TextColors.RESET, "'s"),
                                     "originalSize", Text.of(event.getBackpack().getSizeInventory()),
                                     "targetSize", Text.of(event.getTargetSize())
                             ));
                 }
-                player.sendMessage(Backpack.instance.storage.getChildNodeValue("template.backpack.resize.success", TextTemplate.class),
+                player.sendMessage(Backpack.instance.stash.getChildNodeValue("template.backpack.resize.success", TextTemplate.class),
                         ImmutableMap.of(
                                 "target", Text.of("Your"),
                                 "originalSize", Text.of(event.getBackpack().getSizeInventory()),
