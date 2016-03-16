@@ -100,6 +100,15 @@ public class InventoryBackpack extends InventoryDatabase {
         sendResultMessage("template.backpack.resize.failure", src, player, event);
     }
 
+    public static int getDefaultSize(Player player) {
+        for (Sizes size : Sizes.values()) {
+            if (player.hasPermission("backpack." + player.getWorld().getName().toLowerCase() + ".size.default." + size.value)) {
+                return size.value;
+            }
+        }
+        return 9;
+    }
+
     public static int getLimitSize(CommandSource src, boolean max) {
         final int defaultSize = max ? 54 : 9;
         Optional<Sizes> optSize = Optional.empty();

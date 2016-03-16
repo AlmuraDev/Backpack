@@ -53,8 +53,7 @@ public class BackpackFactory {
             record = new Backpacks();
             record.setWorldUniqueId(world.getUniqueId());
             record.setPlayerUniqueId(player.getUniqueId());
-            // TODO Default size
-            record.setSize(9);
+            record.setSize(InventoryBackpack.getDefaultSize(player));
             record.setTitle("My Backpack");
             session.beginTransaction();
             session.saveOrUpdate(record);
