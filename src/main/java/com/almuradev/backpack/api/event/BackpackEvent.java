@@ -25,12 +25,83 @@
 package com.almuradev.backpack.api.event;
 
 
+import com.almuradev.backpack.database.entity.Backpacks;
 import com.almuradev.backpack.inventory.InventoryBackpack;
 import org.spongepowered.api.event.Cancellable;
 import org.spongepowered.api.event.cause.Cause;
 import org.spongepowered.api.event.impl.AbstractEvent;
 
 public abstract class BackpackEvent extends AbstractEvent {
+
+     public static final class Create extends BackpackEvent implements Cancellable {
+
+         private Backpacks record;
+         private boolean cancelled = false;
+         private final Cause cause;
+
+         public Create(Backpacks record, Cause cause) {
+             this.record = record;
+             this.cause = cause;
+         }
+
+         public Backpacks getRecord() {
+             return record;
+         }
+
+         public void setRecord(Backpacks record) {
+             this.record = record;
+         }
+
+         public boolean isCancelled() {
+             return cancelled;
+         }
+
+         public void setCancelled(boolean cancel) {
+             this.cancelled = cancel;
+         }
+
+         @Override
+         public Cause getCause() {
+             return cause;
+         }
+     }
+
+    public static class Load extends BackpackEvent {
+
+        private Backpacks record;
+        private final Cause cause;
+
+        public Load(Backpacks record, Cause cause) {
+            this.record = record;
+            this.cause = cause;
+        }
+
+        public Backpacks getRecord() {
+            return record;
+        }
+
+        public void setRecord(Backpacks record) {
+            this.record = record;
+        }
+
+        @Override
+        public Cause getCause() {
+            return cause;
+        }
+
+        public static class Post extends Load {
+
+            private InventoryBackpack backpack;
+
+            public Post(InventoryBackpack backpack, Cause cause) {
+                super(backpack.getRecord(), cause);
+            }
+
+            public InventoryBackpack getBackpack() {
+                return backpack;
+            }
+        }
+    }
 
     public static final class Resize extends BackpackEvent implements Cancellable {
 
@@ -61,17 +132,17 @@ public abstract class BackpackEvent extends AbstractEvent {
             this.targetSize = targetSize;
         }
 
-        @Override
-        public Cause getCause() {
-            return cause;
-        }
-
         public boolean isCancelled() {
             return cancelled;
         }
 
         public void setCancelled(boolean cancel) {
             this.cancelled = cancel;
+        }
+
+        @Override
+        public Cause getCause() {
+            return cause;
         }
     }
 }

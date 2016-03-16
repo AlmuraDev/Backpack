@@ -24,6 +24,7 @@
  */
 package com.almuradev.backpack;
 
+import com.almuradev.backpack.api.event.BackpackEvent;
 import com.almuradev.backpack.database.DatabaseManager;
 import com.almuradev.backpack.database.entity.Backpacks;
 import com.almuradev.backpack.inventory.InventoryBackpack;
@@ -31,7 +32,10 @@ import com.google.common.collect.Sets;
 import org.hibernate.Criteria;
 import org.hibernate.Session;
 import org.hibernate.criterion.Restrictions;
+import org.spongepowered.api.Sponge;
 import org.spongepowered.api.entity.living.player.Player;
+import org.spongepowered.api.event.cause.Cause;
+import org.spongepowered.api.event.cause.NamedCause;
 import org.spongepowered.api.world.World;
 
 import java.io.IOException;
@@ -50,23 +54,30 @@ public class BackpackFactory {
                 ("playerUniqueId", player.getUniqueId()))).uniqueResult();
 
         if (record == null) {
-            record = new Backpacks();
-            record.setWorldUniqueId(world.getUniqueId());
-            record.setPlayerUniqueId(player.getUniqueId());
-            record.setSize(InventoryBackpack.getDefaultSize(player));
-            record.setTitle("My Backpack");
-            session.beginTransaction();
-            session.saveOrUpdate(record);
-            session.getTransaction().commit();
+            final BackpackEvent.Create onCreateEvent = new BackpackEvent.Create(new Backpacks(), Cause.of(NamedCause.source(player)));
+            if (!Sponge.getEventManager().post(onCreateEvent)) {
+                onCreateEvent.getRecord().setWorldUniqueId(world.getUniqueId());
+                onCreateEvent.getRecord().setPlayerUniqueId(player.getUniqueId());
+                onCreateEvent.getRecord().setSize(InventoryBackpack.getDefaultSize(player));
+                onCreateEvent.getRecord().setTitle("My Backpack");
+                session.beginTransaction();
+                session.saveOrUpdate(onCreateEvent.getRecord());
+                session.getTransaction().commit();
+            }
         }
 
-        final InventoryBackpack inventory = new InventoryBackpack(record);
+        final BackpackEvent.Load onLoadEvent = new BackpackEvent.Load(record, Cause.of(NamedCause.source(player)));
+        Sponge.getEventManager().post(onLoadEvent);
+
+        final InventoryBackpack inventory = new InventoryBackpack(onLoadEvent.getRecord());
         for (int i = 0; i < inventory.getSizeInventory(); i++) {
             DatabaseManager.loadSlot(session, inventory, i);
         }
         session.close();
-        BACKPACKS.add(inventory);
-        return new InventoryBackpack(record);
+
+        final BackpackEvent.Load.Post onLoadPostEvent = new BackpackEvent.Load.Post(inventory, onLoadEvent.getCause());
+        BACKPACKS.add(onLoadPostEvent.getBackpack());
+        return onLoadPostEvent.getBackpack();
     }
 
     public static Optional<InventoryBackpack> get(World world, Player player) {
