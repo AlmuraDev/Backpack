@@ -27,9 +27,7 @@ package com.almuradev.backpack.database;
 import com.almuradev.backpack.api.database.entity.InventoryEntity;
 import com.almuradev.backpack.api.inventory.IInventoryDatabase;
 import com.almuradev.backpack.database.entity.Backpacks;
-import com.almuradev.backpack.database.entity.Blacklists;
 import com.almuradev.backpack.inventory.InventoryBackpack;
-import com.almuradev.backpack.inventory.InventoryBlacklist;
 import ninja.leaping.configurate.hocon.HoconConfigurationLoader;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
@@ -82,8 +80,6 @@ public class DatabaseManager {
         // Add tables here
         configuration.addAnnotatedClass(Backpacks.class);
         configuration.addAnnotatedClass(Backpacks.Slots.class);
-        configuration.addAnnotatedClass(Blacklists.class);
-        configuration.addAnnotatedClass(Blacklists.Slots.class);
     }
 
     public static SessionFactory getSessionFactory() {
@@ -110,25 +106,6 @@ public class DatabaseManager {
                 slotsRecord.setData(new SerialClob(writer.toString().toCharArray()));
                 session.saveOrUpdate(slotsRecord);
             }
-        } else if (inventory instanceof Blacklists) {
-            final Blacklists blacklists = (Blacklists) inventory;
-            Blacklists.Slots slotsRecord = (Blacklists.Slots) session.createCriteria(Blacklists.Slots.class).add(Restrictions.and(Restrictions.eq
-                    ("blacklists", blacklists), Restrictions.eq("slot", slotIndex))).uniqueResult();
-
-            if (slotData == null && slotsRecord != null) {
-                session.delete(slotsRecord);
-            } else if (slotData != null) {
-                if (slotsRecord == null) {
-                    slotsRecord = new Blacklists.Slots();
-                    slotsRecord.setInventories(blacklists);
-                    slotsRecord.setSlot(slotIndex);
-                }
-                final StringWriter writer = new StringWriter();
-                final HoconConfigurationLoader loader = HoconConfigurationLoader.builder().setSink(() -> new BufferedWriter(writer)).build();
-                loader.save(ConfigurateTranslator.instance().translateData(slotData));
-                slotsRecord.setData(new SerialClob(writer.toString().toCharArray()));
-                session.saveOrUpdate(slotsRecord);
-            }
         }
     }
 
@@ -143,16 +120,6 @@ public class DatabaseManager {
                     (new StringReader(clobToString(slotsRecord.getData())))).build().load());
             final ItemStack slotStack = ItemStack.builder().fromContainer(view).build();
             ((InventoryBackpack) inventory).setInventorySlotContents(slotIndex, (net.minecraft.item.ItemStack) (Object) slotStack);
-        } else if (inventory instanceof InventoryBlacklist) {
-            Blacklists.Slots slotsRecord = (Blacklists.Slots) session.createCriteria(Blacklists.Slots.class)
-                    .add(Restrictions.and(Restrictions.eq("blacklists", inventory.getRecord()), Restrictions.eq("slot", slotIndex))).uniqueResult();
-            if (slotsRecord == null) {
-                return;
-            }
-            final DataView view = ConfigurateTranslator.instance().translateFrom(HoconConfigurationLoader.builder().setSource(() -> new BufferedReader
-                    (new StringReader(clobToString(slotsRecord.getData())))).build().load());
-            final ItemStack slotStack = ItemStack.builder().fromContainer(view).build();
-            ((InventoryBlacklist) inventory).setInventorySlotContents(slotIndex, (net.minecraft.item.ItemStack) (Object) slotStack);
         }
     }
 

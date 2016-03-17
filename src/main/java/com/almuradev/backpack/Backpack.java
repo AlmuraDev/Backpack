@@ -24,18 +24,13 @@
  */
 package com.almuradev.backpack;
 
-import static org.spongepowered.api.command.args.GenericArguments.optional;
 import static org.spongepowered.api.command.args.GenericArguments.string;
 
-import com.almuradev.backpack.api.inventory.Sizes;
 import com.almuradev.backpack.database.DatabaseManager;
 import com.almuradev.backpack.database.entity.Backpacks;
-import com.almuradev.backpack.database.entity.Blacklists;
 import com.almuradev.backpack.inventory.InventoryBackpack;
-import com.almuradev.backpack.inventory.InventoryBlacklist;
 import com.google.inject.Inject;
 import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.inventory.Container;
 import net.minecraft.inventory.ContainerChest;
 import ninja.leaping.configurate.commented.CommentedConfigurationNode;
 import ninja.leaping.configurate.loader.ConfigurationLoader;
@@ -51,33 +46,22 @@ import org.spongepowered.api.command.spec.CommandSpec;
 import org.spongepowered.api.config.DefaultConfig;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.event.Listener;
-import org.spongepowered.api.event.Order;
 import org.spongepowered.api.event.entity.DestructEntityEvent;
-import org.spongepowered.api.event.filter.cause.Root;
-import org.spongepowered.api.event.game.state.GameInitializationEvent;
 import org.spongepowered.api.event.game.state.GamePreInitializationEvent;
-import org.spongepowered.api.event.item.inventory.ClickInventoryEvent;
 import org.spongepowered.api.event.item.inventory.InteractInventoryEvent;
 import org.spongepowered.api.event.network.ClientConnectionEvent;
-import org.spongepowered.api.event.world.LoadWorldEvent;
-import org.spongepowered.api.item.ItemType;
-import org.spongepowered.api.item.ItemTypes;
 import org.spongepowered.api.item.inventory.ItemStack;
-import org.spongepowered.api.item.inventory.property.SlotIndex;
-import org.spongepowered.api.item.inventory.transaction.SlotTransaction;
 import org.spongepowered.api.plugin.Plugin;
 import org.spongepowered.api.plugin.PluginContainer;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.TextTemplate;
 import org.spongepowered.api.text.format.TextColors;
-import org.spongepowered.api.world.World;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.Optional;
-import java.util.Set;
 
 @Plugin(id = Backpack.PLUGIN_ID, name = Backpack.PLUGIN_NAME, version = Backpack.PLUGIN_VERSION)
 public class Backpack {
@@ -200,39 +184,6 @@ public class Backpack {
                         })
                         .build(), "view", "vw")
                 .child(CommandSpec.builder()
-                        .permission("backpack.command.blacklist")
-                        .description(Text.of("Opens the blacklist for the world"))
-                        .arguments(optional(string(Text.of("target"))))
-                        .executor((src, args) -> {
-                            if (!(src instanceof Player)) {
-                                throw new CommandException(Text.of(TextColors.RED, "Must be in-game to view a blacklist!"));
-                            }
-                            final Player player = (Player) src;
-                            Optional<String> optTarget = args.getOne("target");
-                            Optional<InventoryBlacklist> optBlacklistInventory = Optional.empty();
-                            if (optTarget.isPresent()) {
-                                if (optTarget.get().equalsIgnoreCase("global")) {
-                                    optBlacklistInventory = BlacklistFactory.get(Optional.empty());
-                                } else {
-                                    final Optional<World> optWorld = Sponge.getServer().getWorld(optTarget.get());
-                                    if (optWorld.isPresent()) {
-                                        optBlacklistInventory = BlacklistFactory.get(optWorld);
-                                    }
-                                }
-                            } else {
-                                optBlacklistInventory = BlacklistFactory.get(Optional.of(player.getWorld()));
-                            }
-                            if (optBlacklistInventory.isPresent()) {
-                                final boolean modifiable = src.hasPermission("backpack.command.blacklist.modify");
-                                optBlacklistInventory.get().setModifiable(modifiable);
-                                src.sendMessage(Text.of(String.format("Opening %s in %s mode.", optBlacklistInventory.get().getName(),
-                                        modifiable ? "live" : "read-only")));
-                                ((EntityPlayerMP) src).displayGUIChest(optBlacklistInventory.get());
-                            }
-                            return CommandResult.success();
-                        })
-                        .build(), "blacklist", "bl")
-                .child(CommandSpec.builder()
                         .permission("backpack.command.reload")
                         .description(Text.of("Reloads the configuration file."))
                         .executor((src, args) -> {
@@ -248,43 +199,8 @@ public class Backpack {
     }
 
     @Listener
-    public void onGameInitializationEvent(GameInitializationEvent event) throws IOException {
-        BlacklistFactory.load(Optional.empty());
-    }
-
-    @Listener
     public void onClientConnectionEventJoin(ClientConnectionEvent.Join event) throws IOException {
         BackpackFactory.load(event.getTargetEntity().getWorld(), event.getTargetEntity());
-    }
-
-    @Listener
-    public void onLoadWorldEvent(LoadWorldEvent event) throws IOException {
-        BlacklistFactory.load(Optional.of(event.getTargetWorld()));
-    }
-
-    @Listener(order = Order.LAST)
-    public void onClickInventoryEventPrimary(ClickInventoryEvent event, @Root Player player) {
-        if (!player.hasPermission("backpack." + player.getWorld().getName().toLowerCase() + ".blacklist.bypass")) {
-            return;
-        }
-        if (event.getTargetInventory() instanceof ContainerChest) {
-            final ContainerChest containerChest = (ContainerChest) event.getTargetInventory();
-
-            if (containerChest.getLowerChestInventory() instanceof InventoryBackpack) {
-                final net.minecraft.item.ItemStack nmsCursorStack = (net.minecraft.item.ItemStack) (Object) event.getCursorTransaction()
-                        .getOriginal().createStack();
-
-                // Check if the user is placing an item in a slot
-                BlacklistFactory.getBlacklistedItems(player.getWorld()).stream()
-                        .filter(itemStack -> !(((ItemStack) (Object) nmsCursorStack).getItem().equals(ItemTypes.NONE))).forEach(itemStack -> {
-                    final net.minecraft.item.ItemStack nmsBlacklistStack = (net.minecraft.item.ItemStack) (Object) itemStack;
-
-                    if (net.minecraft.item.ItemStack.areItemStacksEqual(nmsBlacklistStack, nmsCursorStack)) {
-                        event.setCancelled(true);
-                    }
-                });
-            }
-        }
     }
 
     @Listener
@@ -299,18 +215,6 @@ public class Backpack {
                 final Session session = DatabaseManager.getSessionFactory().openSession();
                 session.beginTransaction();
                 for (int i = 0; i < record.getSize(); i++) {
-                    final ItemStack stack = (ItemStack) (Object) inventory.getStackInSlot(i);
-                    DatabaseManager.saveSlot(session, record, i, stack == null ? null : stack.toContainer());
-                }
-                session.getTransaction().commit();
-                session.close();
-            } else if (containerChest.getLowerChestInventory() instanceof InventoryBlacklist) {
-                final InventoryBlacklist inventory = (InventoryBlacklist) containerChest.getLowerChestInventory();
-                final Blacklists record = inventory.getRecord();
-
-                final Session session = DatabaseManager.getSessionFactory().openSession();
-                session.beginTransaction();
-                for (int i = 0; i < Sizes.GIGANTIC.value; i++) {
                     final ItemStack stack = (ItemStack) (Object) inventory.getStackInSlot(i);
                     DatabaseManager.saveSlot(session, record, i, stack == null ? null : stack.toContainer());
                 }
