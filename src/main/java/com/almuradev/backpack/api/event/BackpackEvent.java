@@ -33,38 +33,38 @@ import org.spongepowered.api.event.impl.AbstractEvent;
 
 public abstract class BackpackEvent extends AbstractEvent {
 
-     public static final class Create extends BackpackEvent implements Cancellable {
+    public static final class Create extends BackpackEvent implements Cancellable {
 
-         private Backpacks record;
-         private boolean cancelled = false;
-         private final Cause cause;
+        private Backpacks record;
+        private boolean cancelled = false;
+        private final Cause cause;
 
-         public Create(Backpacks record, Cause cause) {
-             this.record = record;
-             this.cause = cause;
-         }
+        public Create(Backpacks record, Cause cause) {
+            this.record = record;
+            this.cause = cause;
+        }
 
-         public Backpacks getRecord() {
-             return record;
-         }
+        public Backpacks getRecord() {
+            return record;
+        }
 
-         public void setRecord(Backpacks record) {
-             this.record = record;
-         }
+        public void setRecord(Backpacks record) {
+            this.record = record;
+        }
 
-         public boolean isCancelled() {
-             return cancelled;
-         }
+        public boolean isCancelled() {
+            return cancelled;
+        }
 
-         public void setCancelled(boolean cancel) {
-             this.cancelled = cancel;
-         }
+        public void setCancelled(boolean cancel) {
+            this.cancelled = cancel;
+        }
 
-         @Override
-         public Cause getCause() {
-             return cause;
-         }
-     }
+        @Override
+        public Cause getCause() {
+            return cause;
+        }
+    }
 
     public static class Load extends BackpackEvent {
 

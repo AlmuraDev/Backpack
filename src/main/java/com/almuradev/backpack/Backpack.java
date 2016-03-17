@@ -52,7 +52,6 @@ import org.spongepowered.api.event.item.inventory.InteractInventoryEvent;
 import org.spongepowered.api.event.network.ClientConnectionEvent;
 import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.plugin.Plugin;
-import org.spongepowered.api.plugin.PluginContainer;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.TextTemplate;
 import org.spongepowered.api.text.format.TextColors;
@@ -71,7 +70,6 @@ public class Backpack {
     public Stash stash;
 
     @Inject public Logger logger;
-    @Inject public PluginContainer container;
     @DefaultConfig(sharedRoot = false)
     @Inject private File configuration;
     @DefaultConfig(sharedRoot = false)
@@ -166,9 +164,8 @@ public class Backpack {
                             }
                             final String playerOrUser = args.<String>getOne("player").orElse(null);
                             final Player player = Sponge.getServer().getPlayer(playerOrUser).orElse(null);
-                            if (player == null) {
-                                // TODO Handle User objects
-                            } else {
+                            // TODO Handle User objects
+                            if (player != null) {
                                 final Optional<InventoryBackpack> optBackpackInventory = BackpackFactory.get(player.getWorld(), player);
                                 if (optBackpackInventory.isPresent()) {
                                     final boolean modifiable = src.hasPermission("backpack.command.view.modify");
