@@ -1,14 +1,8 @@
 buildscript {
     repositories {
         mavenCentral()
-        maven {
-            name = 'forge'
-            url = 'http://files.minecraftforge.net/maven'
-        }
-        maven {
-            name = 'minecrell'
-            url = 'http://repo.minecrell.net/releases'
-        }
+        maven {url = 'http://files.minecraftforge.net/maven'}
+        maven {url = 'http://repo.minecrell.net/releases'}
     }
 
     dependencies {
@@ -39,14 +33,8 @@ minecraft {
 
 repositories {
     mavenCentral()
-    maven {
-        name = 'sponge'
-        url = 'http://repo.spongepowered.org/maven'
-    }
-    maven {
-        name = 'sonatype'
-        url = 'https://oss.sonatype.org/content/repositories/public/'
-    }
+    maven {url = 'http://repo.spongepowered.org/maven'}
+    maven {url = 'https://oss.sonatype.org/content/repositories/public/'}
 }
 
 dependencies {
