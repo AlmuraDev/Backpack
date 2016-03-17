@@ -52,12 +52,15 @@ import org.spongepowered.api.config.DefaultConfig;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.entity.DestructEntityEvent;
+import org.spongepowered.api.event.filter.cause.Root;
 import org.spongepowered.api.event.game.state.GameInitializationEvent;
 import org.spongepowered.api.event.game.state.GamePreInitializationEvent;
+import org.spongepowered.api.event.item.inventory.ClickInventoryEvent;
 import org.spongepowered.api.event.item.inventory.InteractInventoryEvent;
 import org.spongepowered.api.event.network.ClientConnectionEvent;
 import org.spongepowered.api.event.world.LoadWorldEvent;
 import org.spongepowered.api.item.inventory.ItemStack;
+import org.spongepowered.api.item.inventory.transaction.SlotTransaction;
 import org.spongepowered.api.plugin.Plugin;
 import org.spongepowered.api.plugin.PluginContainer;
 import org.spongepowered.api.text.Text;
@@ -70,6 +73,7 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.Optional;
+import java.util.Set;
 
 @Plugin(id = Backpack.PLUGIN_ID, name = Backpack.PLUGIN_NAME, version = Backpack.PLUGIN_VERSION)
 public class Backpack {
@@ -255,11 +259,34 @@ public class Backpack {
     }
 
     @Listener
-    public void onInteractInventoryEventClose(InteractInventoryEvent.Close event) throws IOException, SQLException {
-        final Container container = (Container) event.getTargetInventory();
+    public void onClickInventoryEventPrimary(ClickInventoryEvent event, @Root Player player) {
+        if (player.hasPermission("backpack." + player.getWorld().getName().toLowerCase() + ".blacklist.bypass")) {
+            return;
+        }
+        if (event.getTargetInventory() instanceof ContainerChest) {
+            final ContainerChest containerChest = (ContainerChest) event.getTargetInventory();
 
-        if (container instanceof ContainerChest) {
-            final ContainerChest containerChest = (ContainerChest) container;
+            if (containerChest.getLowerChestInventory() instanceof InventoryBackpack) {
+                for (ItemStack item : BlacklistFactory.getBlacklistedItems(player.getWorld())) {
+                    for (SlotTransaction transaction : event.getTransactions()) {
+                        final Optional<ItemStack> optTargetItem = transaction.getSlot().peek();
+                        if (optTargetItem.isPresent()) {
+                            if (net.minecraft.item.ItemStack.areItemStacksEqual((net.minecraft.item.ItemStack) (Object) item,
+                                    (net.minecraft.item.ItemStack) (Object) optTargetItem.get())) {
+                                event.setCancelled(true);
+                                return;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    @Listener
+    public void onInteractInventoryEventClose(InteractInventoryEvent.Close event) throws IOException, SQLException {
+        if (event.getTargetInventory() instanceof ContainerChest) {
+            final ContainerChest containerChest = (ContainerChest) event.getTargetInventory();
 
             if (containerChest.getLowerChestInventory() instanceof InventoryBackpack) {
                 final InventoryBackpack inventory = (InventoryBackpack) containerChest.getLowerChestInventory();

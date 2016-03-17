@@ -28,6 +28,7 @@ import com.almuradev.backpack.database.DatabaseManager;
 import com.almuradev.backpack.database.entity.Blacklists;
 import com.almuradev.backpack.inventory.InventoryBlacklist;
 import com.google.common.collect.Sets;
+import net.minecraft.item.ItemStack;
 import org.hibernate.Criteria;
 import org.hibernate.Session;
 import org.hibernate.criterion.Restrictions;
@@ -96,5 +97,19 @@ public class BlacklistFactory {
             }
         }
         BLACKLISTS.add(inventory);
+    }
+
+    public static Set<org.spongepowered.api.item.inventory.ItemStack> getBlacklistedItems(World world) {
+        final Set<org.spongepowered.api.item.inventory.ItemStack> items = Sets.newHashSet();
+        for (InventoryBlacklist blacklist : BLACKLISTS) {
+            if (world.getUniqueId().equals(blacklist.getRecord().getWorldUniqueId())) {
+                for (int i = 0; i < blacklist.getSizeInventory(); i++) {
+                    if (blacklist.getStackInSlot(i) != null) {
+                        items.add((org.spongepowered.api.item.inventory.ItemStack) (Object) blacklist.getStackInSlot(i));
+                    }
+                }
+            }
+        }
+        return items;
     }
 }

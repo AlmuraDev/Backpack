@@ -95,6 +95,7 @@ public abstract class BackpackEvent extends AbstractEvent {
 
             public Post(InventoryBackpack backpack, Cause cause) {
                 super(backpack.getRecord(), cause);
+                this.backpack = backpack;
             }
 
             public InventoryBackpack getBackpack() {
