@@ -51,6 +51,7 @@ import org.spongepowered.api.command.spec.CommandSpec;
 import org.spongepowered.api.config.DefaultConfig;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.event.Listener;
+import org.spongepowered.api.event.Order;
 import org.spongepowered.api.event.entity.DestructEntityEvent;
 import org.spongepowered.api.event.filter.cause.Root;
 import org.spongepowered.api.event.game.state.GameInitializationEvent;
@@ -59,7 +60,10 @@ import org.spongepowered.api.event.item.inventory.ClickInventoryEvent;
 import org.spongepowered.api.event.item.inventory.InteractInventoryEvent;
 import org.spongepowered.api.event.network.ClientConnectionEvent;
 import org.spongepowered.api.event.world.LoadWorldEvent;
+import org.spongepowered.api.item.ItemType;
+import org.spongepowered.api.item.ItemTypes;
 import org.spongepowered.api.item.inventory.ItemStack;
+import org.spongepowered.api.item.inventory.property.SlotIndex;
 import org.spongepowered.api.item.inventory.transaction.SlotTransaction;
 import org.spongepowered.api.plugin.Plugin;
 import org.spongepowered.api.plugin.PluginContainer;
@@ -258,27 +262,27 @@ public class Backpack {
         BlacklistFactory.load(Optional.of(event.getTargetWorld()));
     }
 
-    @Listener
+    @Listener(order = Order.LAST)
     public void onClickInventoryEventPrimary(ClickInventoryEvent event, @Root Player player) {
-        if (player.hasPermission("backpack." + player.getWorld().getName().toLowerCase() + ".blacklist.bypass")) {
+        if (!player.hasPermission("backpack." + player.getWorld().getName().toLowerCase() + ".blacklist.bypass")) {
             return;
         }
         if (event.getTargetInventory() instanceof ContainerChest) {
             final ContainerChest containerChest = (ContainerChest) event.getTargetInventory();
 
             if (containerChest.getLowerChestInventory() instanceof InventoryBackpack) {
-                for (ItemStack item : BlacklistFactory.getBlacklistedItems(player.getWorld())) {
-                    for (SlotTransaction transaction : event.getTransactions()) {
-                        final Optional<ItemStack> optTargetItem = transaction.getSlot().peek();
-                        if (optTargetItem.isPresent()) {
-                            if (net.minecraft.item.ItemStack.areItemStacksEqual((net.minecraft.item.ItemStack) (Object) item,
-                                    (net.minecraft.item.ItemStack) (Object) optTargetItem.get())) {
-                                event.setCancelled(true);
-                                return;
-                            }
-                        }
+                final net.minecraft.item.ItemStack nmsCursorStack = (net.minecraft.item.ItemStack) (Object) event.getCursorTransaction()
+                        .getOriginal().createStack();
+
+                // Check if the user is placing an item in a slot
+                BlacklistFactory.getBlacklistedItems(player.getWorld()).stream()
+                        .filter(itemStack -> !(((ItemStack) (Object) nmsCursorStack).getItem().equals(ItemTypes.NONE))).forEach(itemStack -> {
+                    final net.minecraft.item.ItemStack nmsBlacklistStack = (net.minecraft.item.ItemStack) (Object) itemStack;
+
+                    if (net.minecraft.item.ItemStack.areItemStacksEqual(nmsBlacklistStack, nmsCursorStack)) {
+                        event.setCancelled(true);
                     }
-                }
+                });
             }
         }
     }
