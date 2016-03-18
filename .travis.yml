@@ -14,7 +14,7 @@ jdk: oraclejdk8
 #   - $HOME/.m2/
 
 env: GRADLE_OPTS="-Xms1g -Xmx3g"
-install: ./gradlew setupCIWorkspace
+install: ./gradlew setupCIWorkspace --stacktrace
 script: ./gradlew build
 
 notifications:
