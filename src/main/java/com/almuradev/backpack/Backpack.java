@@ -210,7 +210,7 @@ public class Backpack {
                 session.beginTransaction();
                 for (int i = 0; i < record.getSize(); i++) {
                     final ItemStack stack = (ItemStack) (Object) inventory.getStackInSlot(i);
-                    DatabaseManager.saveSlot(session, record, i, stack == null ? null : stack.toContainer());
+                    DatabaseManager.saveSlot(session, record, i, stack);
                 }
                 session.getTransaction().commit();
                 session.close();

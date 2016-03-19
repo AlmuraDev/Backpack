@@ -25,6 +25,7 @@
 package com.almuradev.backpack.database;
 
 import com.almuradev.backpack.api.database.entity.BackpackEntity;
+import com.almuradev.backpack.api.event.SlotEvent;
 import com.almuradev.backpack.api.inventory.IInventoryDatabase;
 import com.almuradev.backpack.database.entity.Backpacks;
 import com.almuradev.backpack.inventory.InventoryBackpack;
@@ -34,9 +35,12 @@ import org.hibernate.SessionFactory;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.cfg.Configuration;
 import org.hibernate.criterion.Restrictions;
+import org.spongepowered.api.Sponge;
 import org.spongepowered.api.data.DataContainer;
 import org.spongepowered.api.data.DataView;
 import org.spongepowered.api.data.translator.ConfigurateTranslator;
+import org.spongepowered.api.event.cause.Cause;
+import org.spongepowered.api.event.cause.NamedCause;
 import org.spongepowered.api.item.inventory.ItemStack;
 
 import java.io.BufferedReader;
@@ -86,11 +90,18 @@ public class DatabaseManager {
         return sessionFactory;
     }
 
-    public static void saveSlot(Session session, BackpackEntity inventory, int slotIndex, DataContainer slotData) throws IOException, SQLException {
+    public static void saveSlot(Session session, BackpackEntity inventory, int slotIndex, ItemStack slotStack) throws IOException, SQLException {
         if (inventory instanceof Backpacks) {
             final Backpacks backpack = (Backpacks) inventory;
             Backpacks.Slots slotsRecord = (Backpacks.Slots) session.createCriteria(Backpacks.Slots.class).add(Restrictions.and(Restrictions.eq
                     ("backpacks", backpack), Restrictions.eq("slot", slotIndex))).uniqueResult();
+
+            final SlotEvent.Save onSlotSaveEvent = new SlotEvent.Save(slotsRecord, slotIndex, slotStack, Cause.of(NamedCause.source(Sponge
+                    .getServer().getPlayer(inventory.getPlayerUniqueId()))));
+
+            Sponge.getEventManager().post(onSlotSaveEvent);
+
+            final DataContainer slotData = onSlotSaveEvent.getItemStack() == null ? null : onSlotSaveEvent.getItemStack().toContainer();
 
             if (slotData == null && slotsRecord != null) {
                 session.delete(slotsRecord);
@@ -98,7 +109,7 @@ public class DatabaseManager {
                 if (slotsRecord == null) {
                     slotsRecord = new Backpacks.Slots();
                     slotsRecord.setInventories(backpack);
-                    slotsRecord.setSlot(slotIndex);
+                    slotsRecord.setSlot(onSlotSaveEvent.getIndex());
                 }
                 final StringWriter writer = new StringWriter();
                 final HoconConfigurationLoader loader = HoconConfigurationLoader.builder().setSink(() -> new BufferedWriter(writer)).build();
@@ -119,7 +130,10 @@ public class DatabaseManager {
             final DataView view = ConfigurateTranslator.instance().translateFrom(HoconConfigurationLoader.builder().setSource(() -> new BufferedReader
                     (new StringReader(clobToString(slotsRecord.getData())))).build().load());
             final ItemStack slotStack = ItemStack.builder().fromContainer(view).build();
-            inventory.setInventorySlotContents(slotIndex, (net.minecraft.item.ItemStack) (Object) slotStack);
+            final SlotEvent.Load onSlotLoadEvent = new SlotEvent.Load(slotsRecord, slotIndex, slotStack,
+                    Cause.of(NamedCause.source(Sponge.getServer().getPlayer(slotsRecord.getInventories().getPlayerUniqueId()))));
+            Sponge.getEventManager().post(onSlotLoadEvent);
+            inventory.setInventorySlotContents(onSlotLoadEvent.getIndex(), (net.minecraft.item.ItemStack) (Object) onSlotLoadEvent.getItemStack());
         }
     }
 
