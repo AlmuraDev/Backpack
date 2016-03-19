@@ -26,7 +26,7 @@ package com.almuradev.backpack.api.database.entity;
 
 import java.util.UUID;
 
-public interface InventoryEntity {
+public interface BackpackEntity {
 
     long getId();
 
@@ -34,7 +34,15 @@ public interface InventoryEntity {
 
     void setWorldUniqueId(UUID worldUniqueId);
 
+    UUID getPlayerUniqueId();
+
+    void setPlayerUniqueId(UUID playerUniqueId);
+
     String getTitle();
 
     void setTitle(String title);
+
+    int getSize();
+
+    void setSize(int size);
 }

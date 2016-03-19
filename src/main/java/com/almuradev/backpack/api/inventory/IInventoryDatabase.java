@@ -24,11 +24,12 @@
  */
 package com.almuradev.backpack.api.inventory;
 
-import com.almuradev.backpack.api.database.entity.InventoryEntity;
+import com.almuradev.backpack.api.database.entity.BackpackEntity;
+import net.minecraft.inventory.IInventory;
 
-public interface IInventoryDatabase {
+public interface IInventoryDatabase extends IInventory {
 
-    InventoryEntity getRecord();
+    BackpackEntity getRecord();
 
     boolean isModifiable();
 

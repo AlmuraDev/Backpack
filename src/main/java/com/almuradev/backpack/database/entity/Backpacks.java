@@ -24,7 +24,7 @@
  */
 package com.almuradev.backpack.database.entity;
 
-import com.almuradev.backpack.api.database.entity.InventoryEntity;
+import com.almuradev.backpack.api.database.entity.BackpackEntity;
 import com.almuradev.backpack.api.database.entity.SlotsEntity;
 import com.google.common.collect.Sets;
 
@@ -46,7 +46,7 @@ import javax.persistence.UniqueConstraint;
 
 @Entity
 @Table(name = "bp_backpacks", uniqueConstraints = {@UniqueConstraint(columnNames = {"backpackId", "world_unique_id", "player_unique_id"})})
-public class Backpacks implements InventoryEntity {
+public class Backpacks implements BackpackEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -155,7 +155,7 @@ public class Backpacks implements InventoryEntity {
             return backpacks;
         }
 
-        public void setInventories(InventoryEntity backpacks) {
+        public void setInventories(BackpackEntity backpacks) {
             if (backpacks instanceof Backpacks) {
                 this.backpacks = (Backpacks) backpacks;
             }

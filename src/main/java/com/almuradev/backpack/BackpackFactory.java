@@ -75,10 +75,8 @@ public class BackpackFactory {
         }
         session.close();
 
-        final BackpackEvent.Load.Post onLoadPostEvent = new BackpackEvent.Load.Post(inventory, onLoadEvent.getCause());
-        Sponge.getEventManager().post(onLoadPostEvent);
-        BACKPACKS.add(onLoadPostEvent.getBackpack());
-        return onLoadPostEvent.getBackpack();
+        BACKPACKS.add(inventory);
+        return inventory;
     }
 
     public static Optional<InventoryBackpack> get(World world, Player player) {

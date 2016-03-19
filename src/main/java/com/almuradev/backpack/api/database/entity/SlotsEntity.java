@@ -30,9 +30,9 @@ public interface SlotsEntity {
 
     long getId();
 
-    InventoryEntity getInventories();
+    BackpackEntity getInventories();
 
-    void setInventories(InventoryEntity inventories);
+    void setInventories(BackpackEntity inventories);
 
     int getSlot();
 

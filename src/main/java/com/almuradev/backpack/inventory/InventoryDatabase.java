@@ -24,7 +24,7 @@
  */
 package com.almuradev.backpack.inventory;
 
-import com.almuradev.backpack.api.database.entity.InventoryEntity;
+import com.almuradev.backpack.api.database.entity.BackpackEntity;
 import com.almuradev.backpack.api.inventory.IInventoryDatabase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.InventoryBasic;
@@ -33,27 +33,30 @@ import java.util.Objects;
 
 public class InventoryDatabase extends InventoryBasic implements IInventoryDatabase {
 
-    private final InventoryEntity record;
+    private final BackpackEntity record;
     private boolean modifiable;
 
-    public InventoryDatabase(String title, int size, InventoryEntity record) {
+    public InventoryDatabase(String title, int size, BackpackEntity record) {
         this(title, size, record, true);
     }
 
-    public InventoryDatabase(String title, int size, InventoryEntity record, boolean modifiable) {
+    public InventoryDatabase(String title, int size, BackpackEntity record, boolean modifiable) {
         super(title, true, size);
         this.record = record;
         this.modifiable = modifiable;
     }
 
-    public InventoryEntity getRecord() {
+    @Override
+    public BackpackEntity getRecord() {
         return record;
     }
 
+    @Override
     public boolean isModifiable() {
         return modifiable;
     }
 
+    @Override
     public void setModifiable(boolean modifiable) {
         this.modifiable = modifiable;
     }

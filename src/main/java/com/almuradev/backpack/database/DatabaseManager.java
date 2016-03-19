@@ -24,7 +24,7 @@
  */
 package com.almuradev.backpack.database;
 
-import com.almuradev.backpack.api.database.entity.InventoryEntity;
+import com.almuradev.backpack.api.database.entity.BackpackEntity;
 import com.almuradev.backpack.api.inventory.IInventoryDatabase;
 import com.almuradev.backpack.database.entity.Backpacks;
 import com.almuradev.backpack.inventory.InventoryBackpack;
@@ -86,7 +86,7 @@ public class DatabaseManager {
         return sessionFactory;
     }
 
-    public static void saveSlot(Session session, InventoryEntity inventory, int slotIndex, DataContainer slotData) throws IOException, SQLException {
+    public static void saveSlot(Session session, BackpackEntity inventory, int slotIndex, DataContainer slotData) throws IOException, SQLException {
         if (inventory instanceof Backpacks) {
             final Backpacks backpack = (Backpacks) inventory;
             Backpacks.Slots slotsRecord = (Backpacks.Slots) session.createCriteria(Backpacks.Slots.class).add(Restrictions.and(Restrictions.eq
@@ -119,7 +119,7 @@ public class DatabaseManager {
             final DataView view = ConfigurateTranslator.instance().translateFrom(HoconConfigurationLoader.builder().setSource(() -> new BufferedReader
                     (new StringReader(clobToString(slotsRecord.getData())))).build().load());
             final ItemStack slotStack = ItemStack.builder().fromContainer(view).build();
-            ((InventoryBackpack) inventory).setInventorySlotContents(slotIndex, (net.minecraft.item.ItemStack) (Object) slotStack);
+            inventory.setInventorySlotContents(slotIndex, (net.minecraft.item.ItemStack) (Object) slotStack);
         }
     }
 

@@ -26,6 +26,7 @@ package com.almuradev.backpack.inventory;
 
 import com.almuradev.backpack.Backpack;
 import com.almuradev.backpack.BackpackFactory;
+import com.almuradev.backpack.api.database.entity.BackpackEntity;
 import com.almuradev.backpack.api.event.BackpackEvent;
 import com.almuradev.backpack.api.inventory.Sizes;
 import com.almuradev.backpack.database.entity.Backpacks;
@@ -45,7 +46,7 @@ import java.util.Optional;
 
 public class InventoryBackpack extends InventoryDatabase {
 
-    public InventoryBackpack(Backpacks record) {
+    public InventoryBackpack(BackpackEntity record) {
         super(record.getTitle(), record.getSize(), record);
     }
 
@@ -85,12 +86,14 @@ public class InventoryBackpack extends InventoryDatabase {
             session.saveOrUpdate(record);
             session.getTransaction().commit();
 
-            final InventoryBackpack resized = new InventoryBackpack(record);
-            for (int i = 0; i < record.getSize(); i++) {
-                resized.setInventorySlotContents(i, backpack.getStackInSlot(i));
-            }
+            final BackpackEvent.Save onSaveEvent = new BackpackEvent.Save(new InventoryBackpack(record), Cause.of(NamedCause.source(src)));
 
-            BackpackFactory.put(resized);
+            for (int i = 0; i < record.getSize(); i++) {
+                onSaveEvent.getInventory().setInventorySlotContents(i, backpack.getStackInSlot(i));
+            }
+            Sponge.getEventManager().post(onSaveEvent);
+
+            BackpackFactory.put((InventoryBackpack) onSaveEvent.getInventory());
             session.close();
             sendResultMessage("template.backpack.resize.success", src, player, event);
             return;
@@ -150,14 +153,14 @@ public class InventoryBackpack extends InventoryDatabase {
                     src.sendMessage(Backpack.instance.stash.getChildNodeValue("template.backpack.resize.success", TextTemplate.class),
                             ImmutableMap.of(
                                     "target", Text.of(TextColors.LIGHT_PURPLE, player.getName(), TextColors.RESET, "'s"),
-                                    "originalSize", Text.of(event.getBackpack().getSizeInventory()),
+                                    "originalSize", Text.of(event.getInventory().getSizeInventory()),
                                     "targetSize", Text.of(event.getTargetSize())
                             ));
                 }
                 player.sendMessage(Backpack.instance.stash.getChildNodeValue("template.backpack.resize.success", TextTemplate.class),
                         ImmutableMap.of(
                                 "target", Text.of("Your"),
-                                "originalSize", Text.of(event.getBackpack().getSizeInventory()),
+                                "originalSize", Text.of(event.getInventory().getSizeInventory()),
                                 "targetSize", Text.of(event.getTargetSize())
                         ));
                 break;
