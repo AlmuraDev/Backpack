@@ -56,7 +56,8 @@ public class InventoryBackpack extends InventoryDatabase {
     }
 
     public void downgrade(Session session, CommandSource src, Player player) {
-        final BackpackEvent.Resize event = new BackpackEvent.Resize(this, getRecord().getSize() - 9, Cause.of(NamedCause.source(src)));
+        final int targetSize = getRecord().getSize() - 9;
+        final BackpackEvent.Resize event = new BackpackEvent.Resize(this, targetSize, Cause.of(NamedCause.source(src)));
         Sponge.getEventManager().post(event);
         if (!event.isCancelled()) {
             resize(session, this, src, player, event);
@@ -64,7 +65,8 @@ public class InventoryBackpack extends InventoryDatabase {
     }
 
     public void upgrade(Session session, CommandSource src, Player player) {
-        final BackpackEvent.Resize event = new BackpackEvent.Resize(this, getRecord().getSize() + 9, Cause.of(NamedCause.source(src)));
+        final int targetSize = getRecord().getSize() + 9;
+        final BackpackEvent.Resize event = new BackpackEvent.Resize(this, targetSize, Cause.of(NamedCause.source(src)));
         Sponge.getEventManager().post(event);
         if (!event.isCancelled()) {
             resize(session, this, src, player, event);

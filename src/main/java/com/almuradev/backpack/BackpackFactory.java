@@ -55,15 +55,14 @@ public class BackpackFactory {
 
         if (record == null) {
             final BackpackEvent.Create onCreateEvent = new BackpackEvent.Create(new Backpacks(), Cause.of(NamedCause.source(player)));
-            if (!Sponge.getEventManager().post(onCreateEvent)) {
-                onCreateEvent.getRecord().setWorldUniqueId(world.getUniqueId());
-                onCreateEvent.getRecord().setPlayerUniqueId(player.getUniqueId());
-                onCreateEvent.getRecord().setSize(InventoryBackpack.getDefaultSize(player));
-                onCreateEvent.getRecord().setTitle("My Backpack");
-                session.beginTransaction();
-                session.saveOrUpdate(onCreateEvent.getRecord());
-                session.getTransaction().commit();
-            }
+            Sponge.getEventManager().post(onCreateEvent);
+            onCreateEvent.getRecord().setWorldUniqueId(world.getUniqueId());
+            onCreateEvent.getRecord().setPlayerUniqueId(player.getUniqueId());
+            onCreateEvent.getRecord().setSize(InventoryBackpack.getDefaultSize(player));
+            onCreateEvent.getRecord().setTitle("My Backpack");
+            session.beginTransaction();
+            session.saveOrUpdate(onCreateEvent.getRecord());
+            session.getTransaction().commit();
         }
 
         final BackpackEvent.Load onLoadEvent = new BackpackEvent.Load(record, Cause.of(NamedCause.source(player)));

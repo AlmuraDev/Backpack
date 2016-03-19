@@ -36,7 +36,6 @@ import ninja.leaping.configurate.commented.CommentedConfigurationNode;
 import ninja.leaping.configurate.loader.ConfigurationLoader;
 import org.hibernate.Session;
 import org.inspirenxe.stash.Stash;
-import org.inspirenxe.stash.nodes.CommentedDefaultNode;
 import org.inspirenxe.stash.nodes.DefaultNode;
 import org.slf4j.Logger;
 import org.spongepowered.api.Sponge;
