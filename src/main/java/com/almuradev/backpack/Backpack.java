@@ -26,6 +26,7 @@ package com.almuradev.backpack;
 
 import static org.spongepowered.api.command.args.GenericArguments.string;
 
+import com.almuradev.backpack.api.inventory.Sizes;
 import com.almuradev.backpack.database.DatabaseManager;
 import com.almuradev.backpack.database.entity.Backpacks;
 import com.almuradev.backpack.inventory.InventoryBackpack;
@@ -47,7 +48,9 @@ import org.spongepowered.api.config.DefaultConfig;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.entity.DestructEntityEvent;
+import org.spongepowered.api.event.game.state.GameLoadCompleteEvent;
 import org.spongepowered.api.event.game.state.GamePreInitializationEvent;
+import org.spongepowered.api.event.game.state.GameStartedServerEvent;
 import org.spongepowered.api.event.item.inventory.InteractInventoryEvent;
 import org.spongepowered.api.event.network.ClientConnectionEvent;
 import org.spongepowered.api.item.inventory.ItemStack;
@@ -55,9 +58,11 @@ import org.spongepowered.api.plugin.Plugin;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.TextTemplate;
 import org.spongepowered.api.text.format.TextColors;
+import org.spongepowered.api.world.World;
 
 import java.io.File;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.Optional;
@@ -67,6 +72,7 @@ public class Backpack {
 
     public static final String PLUGIN_ID = "com.almuradev.backpack", PLUGIN_NAME = "Backpack", PLUGIN_VERSION = "1.0";
     public static Backpack instance;
+    public Economy economy = new Economy();
     public Stash stash;
 
     @Inject public Logger logger;
@@ -190,6 +196,19 @@ public class Backpack {
                         .build(), "reload", "rl")
                 .build(), "backpack", "bp");
         DatabaseManager.init(Paths.get(".\\" + Backpack.instance.configuration.getParent()), "backpacks");
+    }
+
+    @Listener
+    public void onGameStartedServerEvent(GameStartedServerEvent event) {
+        for (World world : Sponge.getServer().getWorlds()) {
+            for (Sizes size : Sizes.values()) {
+                stash.registerDefaultNode(new DefaultNode.Builder<>(BigDecimal.class)
+                        .key("worlds." + world.getName().toLowerCase() + ".economy." + size.name().toLowerCase())
+                        .value(BigDecimal.ZERO)
+                        .build());
+            }
+        }
+        stash.save();
     }
 
     @Listener

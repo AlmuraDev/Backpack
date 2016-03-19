@@ -38,10 +38,12 @@ import org.spongepowered.api.command.CommandSource;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.event.cause.Cause;
 import org.spongepowered.api.event.cause.NamedCause;
+import org.spongepowered.api.service.economy.transaction.ResultType;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.TextTemplate;
 import org.spongepowered.api.text.format.TextColors;
 
+import java.math.BigDecimal;
 import java.util.Optional;
 
 public class InventoryBackpack extends InventoryDatabase {
@@ -66,10 +68,31 @@ public class InventoryBackpack extends InventoryDatabase {
 
     public void upgrade(Session session, CommandSource src, Player player) {
         final int targetSize = getRecord().getSize() + 9;
-        final BackpackEvent.Resize event = new BackpackEvent.Resize(this, targetSize, Cause.of(NamedCause.source(src)));
-        Sponge.getEventManager().post(event);
-        if (!event.isCancelled()) {
-            resize(session, this, src, player, event);
+        if (src == player) {
+            final BigDecimal cost = BigDecimal.valueOf(Backpack.instance.stash.getChildNode("worlds." + player.getWorld().getName().toLowerCase() +
+                    ".economy." + Sizes.get(targetSize).name().toLowerCase()).getDouble());
+            final Optional<BigDecimal> optBalance = Backpack.instance.economy.getBalance(player);
+            if (optBalance.isPresent()) {
+                if (cost.compareTo(optBalance.get()) >= 0) {
+                    final ResultType result = Backpack.instance.economy.charge(player, cost);
+                    switch (result) {
+                        case SUCCESS:
+                            player.sendMessage(Text.of("You were charged " + cost + " for this upgrade."));
+                            break;
+                        case ACCOUNT_NO_FUNDS:
+                            player.sendMessage(Text.of("Insufficient funds."));
+                            return;
+                        default:
+                            break;
+                    }
+                }
+            }
+
+            final BackpackEvent.Resize event = new BackpackEvent.Resize(this, targetSize, Cause.of(NamedCause.source(src)));
+            Sponge.getEventManager().post(event);
+            if (!event.isCancelled()) {
+                resize(session, this, src, player, event);
+            }
         }
     }
 
