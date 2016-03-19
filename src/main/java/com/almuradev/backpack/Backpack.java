@@ -37,6 +37,7 @@ import ninja.leaping.configurate.loader.ConfigurationLoader;
 import org.hibernate.Session;
 import org.inspirenxe.stash.Stash;
 import org.inspirenxe.stash.nodes.CommentedDefaultNode;
+import org.inspirenxe.stash.nodes.DefaultNode;
 import org.slf4j.Logger;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.command.CommandException;
@@ -79,7 +80,7 @@ public class Backpack {
     public void onGamePreInitializationEvent(GamePreInitializationEvent event) {
         instance = this;
         stash = new Stash(logger, configuration, loader).init();
-        stash.registerDefaultNode(CommentedDefaultNode.builder(TextTemplate.class)
+        stash.registerDefaultNode(DefaultNode.builder(TextTemplate.class)
                 .key("template.backpack.resize.success")
                 .value(TextTemplate.of(
                         TextTemplate.arg("target"),
@@ -87,19 +88,17 @@ public class Backpack {
                         TextTemplate.arg("originalSize"),
                         " to ",
                         TextTemplate.arg("targetSize")))
-                .type(Optional.of(TextTemplate.class))
                 .build()
         );
-        stash.registerDefaultNode(CommentedDefaultNode.builder(TextTemplate.class)
+        stash.registerDefaultNode(DefaultNode.builder(TextTemplate.class)
                 .key("template.backpack.resize.failure")
                 .value(TextTemplate.of(
                         "Unable to resize",
                         TextTemplate.arg("target"),
                         " backpack"))
-                .type(Optional.of(TextTemplate.class))
                 .build()
         );
-        stash.registerDefaultNode(CommentedDefaultNode.builder(TextTemplate.class)
+        stash.registerDefaultNode(DefaultNode.builder(TextTemplate.class)
                 .key("template.backpack.resize.limit")
                 .value(TextTemplate.of(
                         TextTemplate.arg("target"),
@@ -108,7 +107,6 @@ public class Backpack {
                         ", max: ",
                         TextTemplate.arg("max"),
                         ")"))
-                .type(Optional.of(TextTemplate.class))
                 .build()
         );
         stash.save();
