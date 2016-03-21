@@ -26,6 +26,7 @@ package com.almuradev.backpack;
 
 import static org.spongepowered.api.command.args.GenericArguments.string;
 
+import com.almuradev.backpack.api.event.BackpackEvent;
 import com.almuradev.backpack.api.inventory.Sizes;
 import com.almuradev.backpack.database.DatabaseManager;
 import com.almuradev.backpack.database.entity.Backpacks;
@@ -47,14 +48,15 @@ import org.spongepowered.api.command.spec.CommandSpec;
 import org.spongepowered.api.config.DefaultConfig;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.event.Listener;
+import org.spongepowered.api.event.Order;
 import org.spongepowered.api.event.entity.DestructEntityEvent;
-import org.spongepowered.api.event.game.state.GameLoadCompleteEvent;
 import org.spongepowered.api.event.game.state.GamePreInitializationEvent;
 import org.spongepowered.api.event.game.state.GameStartedServerEvent;
 import org.spongepowered.api.event.item.inventory.InteractInventoryEvent;
 import org.spongepowered.api.event.network.ClientConnectionEvent;
 import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.plugin.Plugin;
+import org.spongepowered.api.service.economy.transaction.ResultType;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.TextTemplate;
 import org.spongepowered.api.text.format.TextColors;
@@ -247,6 +249,32 @@ public class Backpack {
                     for (int i = 0; i < optBackpack.get().getSizeInventory(); i++) {
                         ((EntityPlayerMP) player).dropItem(optBackpack.get().getStackInSlot(i), true, true);
                         optBackpack.get().setInventorySlotContents(i, null);
+                    }
+                }
+            }
+        }
+    }
+
+    @Listener(order = Order.LAST)
+    public void onBackpackEventResize(BackpackEvent.Resize event) {
+        final Optional<Player> optPlayer = Sponge.getServer().getPlayer(event.getInventory().getRecord().getPlayerUniqueId());
+        if (optPlayer.isPresent()) {
+            final BigDecimal cost = BigDecimal.valueOf(Backpack.instance.stash.getChildNode("worlds." + optPlayer.get().getWorld().getName()
+                    .toLowerCase() +
+                    ".economy." + Sizes.get(event.getTargetSize()).name().toLowerCase()).getDouble());
+            final Optional<BigDecimal> optBalance = Backpack.instance.economy.getBalance(optPlayer.get());
+            if (optBalance.isPresent()) {
+                if (cost.compareTo(optBalance.get()) >= 0) {
+                    final ResultType result = Backpack.instance.economy.charge(optPlayer.get(), cost);
+                    switch (result) {
+                        case SUCCESS:
+                            optPlayer.get().sendMessage(Text.of("You were charged " + cost + " for this upgrade."));
+                            break;
+                        case ACCOUNT_NO_FUNDS:
+                            optPlayer.get().sendMessage(Text.of("Insufficient funds."));
+                            return;
+                        default:
+                            break;
                     }
                 }
             }
