@@ -68,13 +68,10 @@ public class InventoryBackpack extends InventoryDatabase {
 
     public void upgrade(Session session, CommandSource src, Player player) {
         final int targetSize = getRecord().getSize() + 9;
-        if (src == player) {
-
-            final BackpackEvent.Resize event = new BackpackEvent.Resize(this, targetSize, Cause.of(NamedCause.source(src)));
-            Sponge.getEventManager().post(event);
-            if (!event.isCancelled()) {
-                resize(session, this, src, player, event);
-            }
+        final BackpackEvent.Resize event = new BackpackEvent.Resize(this, targetSize, Cause.of(NamedCause.source(src)));
+        Sponge.getEventManager().post(event);
+        if (!event.isCancelled()) {
+            resize(session, this, src, player, event);
         }
     }
 

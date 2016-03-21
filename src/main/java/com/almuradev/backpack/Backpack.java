@@ -43,6 +43,7 @@ import org.slf4j.Logger;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.CommandResult;
+import org.spongepowered.api.command.CommandSource;
 import org.spongepowered.api.command.args.GenericArguments;
 import org.spongepowered.api.command.spec.CommandSpec;
 import org.spongepowered.api.config.DefaultConfig;
@@ -257,24 +258,27 @@ public class Backpack {
 
     @Listener(order = Order.LAST)
     public void onBackpackEventResize(BackpackEvent.Resize event) {
-        final Optional<Player> optPlayer = Sponge.getServer().getPlayer(event.getInventory().getRecord().getPlayerUniqueId());
-        if (optPlayer.isPresent()) {
-            final BigDecimal cost = BigDecimal.valueOf(Backpack.instance.stash.getChildNode("worlds." + optPlayer.get().getWorld().getName()
-                    .toLowerCase() +
-                    ".economy." + Sizes.get(event.getTargetSize()).name().toLowerCase()).getDouble());
-            final Optional<BigDecimal> optBalance = Backpack.instance.economy.getBalance(optPlayer.get());
-            if (optBalance.isPresent()) {
-                if (cost.compareTo(optBalance.get()) >= 0) {
-                    final ResultType result = Backpack.instance.economy.charge(optPlayer.get(), cost);
-                    switch (result) {
-                        case SUCCESS:
-                            optPlayer.get().sendMessage(Text.of("You were charged " + cost + " for this upgrade."));
-                            break;
-                        case ACCOUNT_NO_FUNDS:
-                            optPlayer.get().sendMessage(Text.of("Insufficient funds."));
-                            return;
-                        default:
-                            break;
+        final Optional<Player> optTargetPlayer = Sponge.getServer().getPlayer(event.getInventory().getRecord().getPlayerUniqueId());
+        if (optTargetPlayer.isPresent()) {
+            final Optional<Player> optCausePlayer = event.getCause().first(Player.class);
+            // If the backpack's owner is the person causing the resize, then charge them.
+            if (optCausePlayer.isPresent() && optTargetPlayer.get().equals(optCausePlayer.get())) {
+                final BigDecimal cost = BigDecimal.valueOf(Backpack.instance.stash.getChildNode("worlds." + optTargetPlayer.get().getWorld().getName()
+                        .toLowerCase() + ".economy." + Sizes.get(event.getTargetSize()).name().toLowerCase()).getDouble());
+                final Optional<BigDecimal> optBalance = Backpack.instance.economy.getBalance(optTargetPlayer.get());
+                if (optBalance.isPresent()) {
+                    if (cost.compareTo(optBalance.get()) >= 0) {
+                        final ResultType result = Backpack.instance.economy.charge(optTargetPlayer.get(), cost);
+                        switch (result) {
+                            case SUCCESS:
+                                optTargetPlayer.get().sendMessage(Text.of("You were charged " + cost + " for this upgrade."));
+                                break;
+                            case ACCOUNT_NO_FUNDS:
+                                optTargetPlayer.get().sendMessage(Text.of("Insufficient funds."));
+                                event.setCancelled(true);
+                            default:
+                                break;
+                        }
                     }
                 }
             }
