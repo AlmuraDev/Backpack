@@ -50,8 +50,9 @@ public class BackpackFactory {
     public static InventoryBackpack load(World world, Player player) throws IOException {
         final Session session = DatabaseManager.getSessionFactory().openSession();
         final Criteria criteria = session.createCriteria(Backpacks.class);
-        Backpacks record = (Backpacks) criteria.add(Restrictions.and(Restrictions.eq("worldUniqueId", world.getUniqueId()), Restrictions.eq
-                ("playerUniqueId", player.getUniqueId()))).uniqueResult();
+        Backpacks record = (Backpacks) criteria.add(Restrictions.and(
+                Restrictions.eq("worldUniqueId", world.getUniqueId()),
+                Restrictions.eq("playerUniqueId", player.getUniqueId()))).uniqueResult();
 
         if (record == null) {
             final BackpackEvent.Create onCreateEvent = new BackpackEvent.Create(new Backpacks(), Cause.of(NamedCause.source(player)));

@@ -54,4 +54,8 @@ public enum Sizes {
                 return TINY;
         }
     }
+
+    public static int getStride() {
+        return 9;
+    }
 }

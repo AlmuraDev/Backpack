@@ -38,12 +38,10 @@ import org.spongepowered.api.command.CommandSource;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.event.cause.Cause;
 import org.spongepowered.api.event.cause.NamedCause;
-import org.spongepowered.api.service.economy.transaction.ResultType;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.TextTemplate;
 import org.spongepowered.api.text.format.TextColors;
 
-import java.math.BigDecimal;
 import java.util.Optional;
 
 public class InventoryBackpack extends InventoryDatabase {
@@ -58,7 +56,7 @@ public class InventoryBackpack extends InventoryDatabase {
     }
 
     public void downgrade(Session session, CommandSource src, Player player) {
-        final int targetSize = getRecord().getSize() - 9;
+        final int targetSize = getRecord().getSize() - Sizes.getStride();
         final BackpackEvent.Resize event = new BackpackEvent.Resize(this, targetSize, Cause.of(NamedCause.source(src)));
         Sponge.getEventManager().post(event);
         if (!event.isCancelled()) {
@@ -67,7 +65,7 @@ public class InventoryBackpack extends InventoryDatabase {
     }
 
     public void upgrade(Session session, CommandSource src, Player player) {
-        final int targetSize = getRecord().getSize() + 9;
+        final int targetSize = getRecord().getSize() + Sizes.getStride();
         final BackpackEvent.Resize event = new BackpackEvent.Resize(this, targetSize, Cause.of(NamedCause.source(src)));
         Sponge.getEventManager().post(event);
         if (!event.isCancelled()) {
@@ -113,11 +111,11 @@ public class InventoryBackpack extends InventoryDatabase {
                 return size.value;
             }
         }
-        return 9;
+        return Sizes.TINY.value;
     }
 
     public static int getLimitSize(CommandSource src, boolean max) {
-        final int defaultSize = max ? 54 : 9;
+        final int defaultSize = max ? Sizes.GIGANTIC.value : Sizes.TINY.value;
         Optional<Sizes> optSize = Optional.empty();
         if (src instanceof Player) {
             final Player player = (Player) src;
