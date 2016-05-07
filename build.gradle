@@ -84,6 +84,8 @@ javadoc {
 
 shadowJar {
     dependencies {
+        include(dependency('org.hibernate:hibernate-core'))
+        include(dependency('org.hibernate:hibernate-hikaricp'))
         include(dependency('org.inspirenxe:stash'))
     }
     classifier = ''
